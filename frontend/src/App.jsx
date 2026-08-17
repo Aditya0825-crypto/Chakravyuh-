@@ -21,9 +21,11 @@ import LearningLog from './pages/LearningLog';
 // Console shell — wraps Sidebar + TopBar + nested routes
 // global.css is imported here so it only applies inside the console, not on the landing page
 import './styles/global.css';
+import { ScanProvider } from './context/ScanContext';
 
 function ConsoleShell() {
   return (
+    <ScanProvider>
     <div className="app-layout">
       <Sidebar />
       <div className="app-main">
@@ -55,6 +57,7 @@ function ConsoleShell() {
         }}
       />
     </div>
+    </ScanProvider>
   );
 }
 

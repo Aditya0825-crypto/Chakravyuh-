@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { uploadScan } from '../api/client';
+import { useScan } from '../context/ScanContext';
 import {
   UploadCloud, FileArchive, FileCode2, File as FileIcon,
   X, Trash2, ArrowRight, Loader2, CheckCircle2, ShieldAlert,
@@ -59,6 +61,8 @@ let uid = 0;
 export default function UploadTarget() {
   const nav = useNavigate();
   const inputRef = useRef(null);
+  const fileObjectsRef = useRef(new Map());
+  const { setScanId } = useScan();
 
   const [files, setFiles] = useState([]);
   const [rejected, setRejected] = useState([]);
@@ -73,8 +77,10 @@ export default function UploadTarget() {
     incoming.forEach((f) => {
       const ext = extOf(f.name);
       if (ALL_ACCEPTED.includes(ext)) {
+        const id = `f${++uid}`;
+        fileObjectsRef.current.set(id, f);
         accepted.push({
-          id: `f${++uid}`,
+          id,
           name: f.name,
           size: f.size,
           ext,
@@ -113,8 +119,16 @@ export default function UploadTarget() {
   const onDragOver = (e) => { e.preventDefault(); setDragActive(true); };
   const onDragLeave = (e) => { e.preventDefault(); setDragActive(false); };
 
-  const removeFile = (id) => setFiles((prev) => prev.filter((f) => f.id !== id));
-  const clearAll = () => { setFiles([]); setRejected([]); setStatus('idle'); };
+  const removeFile = (id) => {
+    fileObjectsRef.current.delete(id);
+    setFiles((prev) => prev.filter((f) => f.id !== id));
+  };
+  const clearAll = () => {
+    fileObjectsRef.current.clear();
+    setFiles([]);
+    setRejected([]);
+    setStatus('idle');
+  };
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
   const hasArchive = files.some((f) => f.isArchive);
@@ -122,16 +136,21 @@ export default function UploadTarget() {
     files.filter((f) => !f.isArchive).map((f) => LANGUAGE_MAP[f.ext]).filter(Boolean)
   )];
 
-  const beginAnalysis = () => {
+  const beginAnalysis = async () => {
     if (!files.length) return;
     setStatus('uploading');
     toast.loading('Ingesting target into Chakravyuh…', { id: 'ingest' });
 
-    // Simulated ingestion — wires into the existing mock pipeline.
-    setTimeout(() => {
+    try {
+      const blobList = files.map((f) => fileObjectsRef.current.get(f.id)).filter(Boolean);
+      const result = await uploadScan(blobList);
+      setScanId(result.id);
       toast.success('Target ingested — autonomous pipeline started', { id: 'ingest' });
       nav('/console/recon');
-    }, 1400);
+    } catch (err) {
+      setStatus('ready');
+      toast.error(err.message || 'Upload failed', { id: 'ingest' });
+    }
   };
 
   return (

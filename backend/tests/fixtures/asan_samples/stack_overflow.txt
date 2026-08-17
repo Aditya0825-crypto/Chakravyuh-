@@ -1,0 +1,9 @@
+==23456==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7fff50a1b080 at pc 0x7f9e0d2b1a20 bp 0x7fff50a1b030 sp 0x7fff50a1a7d8
+WRITE of size 256 at 0x7fff50a1b080 thread T0
+    #0 0x7f9e0d2b1a1f in sprintf (/lib/x86_64-linux-gnu/libasan.so.6+0x43a1f)
+    #1 0x55c4e2f1a091 in parse_header parser.c:91
+    #2 0x55c4e2f1a142 in handle_request server.c:142
+    #3 0x55c4e2f1a201 in main main.c:23
+
+SUMMARY: AddressSanitizer: stack-buffer-overflow parser.c:91 in parse_header
+==23456==ABORTING

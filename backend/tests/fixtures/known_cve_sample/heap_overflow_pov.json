@@ -1,0 +1,14 @@
+{
+  "crash_type": "heap-buffer-overflow",
+  "cwe": "CWE-122",
+  "function": "handle_request",
+  "file": "server.c",
+  "asan_summary": "ERROR: AddressSanitizer: heap-buffer-overflow on address 0x... strcpy",
+  "stack_trace": [
+    "handle_request",
+    "process_line",
+    "main"
+  ],
+  "expected_top_cve": "CVE-2021-3156",
+  "min_similarity": 60.0
+}
