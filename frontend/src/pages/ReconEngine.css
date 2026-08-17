@@ -1,0 +1,80 @@
+.recon__metric-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-3);
+}
+
+.recon__metric-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recon__metric-pill--hot {
+  border-left: 3px solid var(--red);
+}
+
+.recon__metric-label {
+  font-size: 11px;
+  color: var(--t3);
+}
+
+.recon__metric-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.recon__metric-pill--hot .recon__metric-val {
+  color: var(--red-light);
+}
+
+/* Hero */
+.recon__hero {
+  padding: var(--sp-6) var(--sp-7);
+}
+
+.recon__callpath-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  flex-wrap: wrap;
+}
+
+.recon__node-chip {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 3px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  color: var(--t2);
+}
+
+.recon__node-chip--sink {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red-light);
+  font-weight: 700;
+}
+
+.recon__row--top td {
+  background: rgba(224, 64, 64, 0.03);
+}
+
+/* Semgrep Items */
+.recon__semgrep-item {
+  padding: 12px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+}

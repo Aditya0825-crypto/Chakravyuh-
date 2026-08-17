@@ -1,0 +1,95 @@
+.ll__kpi-card {
+  padding: var(--sp-5) var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.ll__kpi-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--t1);
+  line-height: 1;
+  margin-top: 4px;
+}
+
+/* Filter Bar */
+.ll__filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.ll__search-box {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 10px 14px;
+  transition: border-color var(--t-fast);
+}
+
+.ll__search-box:focus-within {
+  border-color: var(--signal-border);
+  box-shadow: 0 0 0 3px var(--signal-bg);
+}
+
+.ll__search-input {
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--t1);
+  width: 100%;
+}
+
+.ll__search-input::placeholder {
+  color: var(--t3);
+}
+
+.ll__pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ll__pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 99px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-1);
+  color: var(--t3);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.ll__pill:hover {
+  border-color: var(--border-3);
+  color: var(--t1);
+}
+
+.ll__pill--active {
+  background: var(--signal-bg-mid);
+  border-color: var(--signal-border);
+  color: var(--signal-light);
+}
+
+/* Database Footer */
+.ll__db-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 16px 20px;
+  background: var(--bg-surface);
+}

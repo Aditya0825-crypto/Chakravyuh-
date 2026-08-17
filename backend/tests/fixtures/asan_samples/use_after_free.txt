@@ -1,0 +1,8 @@
+==34567==ERROR: AddressSanitizer: heap-use-after-free on address 0x602000000050 at pc 0x7fa1bc3a2e10 bp 0x7ffd3a2b1000 sp 0x7ffd3a2b07f8
+READ of size 8 at 0x602000000050 thread T0
+    #0 0x7fa1bc3a2e0f in destroy_session session.c:204
+    #1 0x55d5f3a2b301 in cleanup_handler server.c:301
+    #2 0x55d5f3a2b142 in handle_request server.c:142
+
+SUMMARY: AddressSanitizer: heap-use-after-free session.c:204 in destroy_session
+==34567==ABORTING

@@ -1,0 +1,19 @@
+==12345==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x603000000050 at pc 0x7f8b2c1a2f40 bp 0x7ffeedaab100 sp 0x7ffeedaaa8a8
+WRITE of size 512 at 0x603000000050 thread T0
+    #0 0x7f8b2c1a2f3f in strcpy (/lib/x86_64-linux-gnu/libasan.so.6+0x43f3f)
+    #1 0x55a1b2c3d148 in handle_request server.c:8
+    #2 0x55a1b2c3d201 in main server.c:18
+    #3 0x7f8b2bfcdd8f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f)
+    #4 0x55a1b2c3d028 in _start (server+0x4028)
+
+0x603000000050 is located 0 bytes to the right of 64-byte region [0x603000000010,0x603000000050)
+allocated by thread T0 here:
+    #0 0x7f8b2c1a4887 in malloc (/lib/x86_64-linux-gnu/libasan.so.6+0x45887)
+    #1 0x55a1b2c3d120 in handle_request server.c:6
+    #2 0x55a1b2c3d201 in main server.c:18
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow server.c:8 in handle_request
+Shadow bytes around the buggy address:
+  0x0c067fff9fb0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff9fc0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+==12345==ABORTING

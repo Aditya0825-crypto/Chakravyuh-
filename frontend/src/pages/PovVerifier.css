@@ -1,0 +1,31 @@
+.pov__steps-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  overflow-x: auto;
+}
+
+.pov__step-unit {
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  flex: 1;
+}
+
+.pov__step-arrow {
+  color: var(--t4);
+  font-size: 14px;
+  padding: 0 4px;
+}
+
+.pov__asan-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(224, 64, 64, 0.05);
+  border: 1px solid rgba(224, 64, 64, 0.12);
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}

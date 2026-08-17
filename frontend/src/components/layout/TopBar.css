@@ -1,0 +1,37 @@
+.topbar {
+  height: var(--topbar-h); background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-1);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--sp-8); flex-shrink: 0; position: sticky; top: 0; z-index: 50;
+}
+.topbar__left { display: flex; align-items: center; gap: 12px; }
+.topbar__page-title { font-size: 14px; font-weight: 600; color: var(--t1); }
+.topbar__stage-pill {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 3px 10px; border-radius: 99px;
+}
+.topbar__stage-pill--green  { background: var(--signal-bg); color: var(--signal-light); border: 1px solid var(--signal-border); }
+.topbar__stage-pill--amber  { background: var(--amber-bg-mid); color: var(--amber-light); border: 1px solid rgba(255,184,0,0.3); animation: badge-pulse 2s infinite; }
+.topbar__stage-pill--neutral{ background: var(--bg-panel); color: var(--t3); border: 1px solid var(--border-2); }
+
+.topbar__right { display: flex; align-items: center; gap: 16px; }
+.topbar__target {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px; background: var(--yellow-bg);
+  border: 1px solid var(--yellow-border); border-radius: 99px;
+}
+.topbar__target-label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--yellow-light); }
+.topbar__target-stage { font-family: var(--font-mono); font-size: 10px; color: var(--t3); padding-left: 8px; border-left: 1px solid var(--border-2); }
+.topbar__sep { width: 1px; height: 20px; background: var(--border-1); }
+.topbar__clock { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--t3); }
+.topbar__icon-btn {
+  width: 32px; height: 32px; background: var(--bg-elevated); border: 1px solid var(--border-1);
+  border-radius: var(--r-md); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--t3); position: relative; transition: all var(--t-fast);
+}
+.topbar__icon-btn:hover { border-color: var(--signal-border); color: var(--t2); background: var(--bg-panel); }
+.topbar__notif {
+  position: absolute; top: 6px; right: 6px; width: 5px; height: 5px;
+  background: var(--signal); border-radius: 50%; border: 1px solid var(--bg-surface);
+  box-shadow: 0 0 6px rgba(0,255,157,0.6);
+}
