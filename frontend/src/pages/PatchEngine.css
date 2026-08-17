@@ -1,0 +1,226 @@
+.patch__winner-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+}
+
+.patch__winner-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  border-radius: var(--r-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-light);
+  flex-shrink: 0;
+}
+
+.patch__winner-body {
+  flex: 1;
+}
+
+.patch__winner-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.patch__winner-score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border-left: 1px solid var(--border-1);
+  padding-left: var(--sp-6);
+}
+
+.patch__winner-score-num {
+  font-family: var(--font-mono);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--green-light);
+  line-height: 1;
+}
+
+.patch__winner-score-lbl {
+  font-size: 11px;
+  color: var(--t3);
+  margin-top: 4px;
+}
+
+.patch__section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: var(--sp-4);
+}
+
+/* Agent Card */
+.patch__agent-card {
+  padding: var(--sp-6);
+  transition: all var(--t-fast);
+}
+
+.patch__agent-card--winner {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(22, 184, 112, 0.04) 100%);
+}
+
+.patch__agent-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  cursor: pointer;
+}
+
+.patch__agent-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.patch__agent-badge--cyan   { background: var(--cyan-bg); color: var(--cyan-light); border: 1px solid var(--cyan-border); }
+.patch__agent-badge--amber  { background: var(--amber-bg-mid); color: var(--amber-light); border: 1px solid var(--amber-dim); }
+.patch__agent-badge--purple { background: var(--purple-bg); color: var(--purple-light); border: 1px solid var(--purple-border); }
+
+.patch__agent-title-block {
+  flex: 1;
+}
+
+.patch__agent-score-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.patch__agent-score-num {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.patch__reject-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: var(--sp-4);
+  padding: 10px 14px;
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  border-radius: var(--r-md);
+}
+
+/* Score Pills Row */
+.patch__score-pills {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-1);
+}
+
+.patch__score-pill {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+}
+
+.patch__score-pill-label {
+  display: block;
+  font-size: 11px;
+  color: var(--t3);
+}
+
+.patch__score-pill-val {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--t1);
+  margin-top: 2px;
+  display: block;
+}
+
+.patch__field-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 8px;
+}
+
+/* Weights Matrix Grid */
+.patch__weights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-4);
+}
+
+.patch__weight-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 16px;
+}
+
+.patch__weight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.patch__weight-label {
+  font-weight: 600;
+  color: var(--t1);
+}
+
+.patch__weight-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--amber-light);
+}
+
+/* Feedback Chain */
+.patch__feedback-chain {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.patch__chain-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: 99px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--t2);
+}
+
+.patch__chain-node--active {
+  border-color: var(--green-border);
+  background: var(--green-bg);
+  color: var(--green-light);
+  font-weight: 600;
+}
+
+.patch__chain-arrow {
+  color: var(--t4);
+  font-size: 14px;
+}

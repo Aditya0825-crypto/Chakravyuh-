@@ -1,0 +1,143 @@
+/* ── Upload Target — Stage 00 ── */
+
+.ut__dropzone-card {
+  padding: var(--sp-3);
+}
+
+.ut__dropzone {
+  border: 1.5px dashed var(--border-2);
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  padding: var(--sp-10) var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.ut__dropzone:hover {
+  border-color: var(--signal-border);
+  background: var(--bg-panel);
+}
+
+.ut__dropzone--active {
+  border-color: var(--signal);
+  background: var(--signal-bg);
+  box-shadow: inset 0 0 0 1px var(--signal-border);
+}
+
+.ut__dropzone-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-xl);
+  background: var(--signal-bg-mid);
+  border: 1px solid var(--signal-border);
+  color: var(--signal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-5);
+}
+
+.ut__dropzone-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--t1);
+  margin-bottom: var(--sp-2);
+}
+
+.ut__dropzone-sub {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--t3);
+  margin-bottom: var(--sp-5);
+}
+
+.ut__dropzone-sub strong {
+  color: var(--t2);
+  font-weight: 600;
+}
+
+.ut__dropzone-link {
+  color: var(--signal-light);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ut__dropzone-formats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+/* File list */
+.ut__filelist-card {
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ut__filelist {
+  overflow-y: auto;
+  padding: var(--sp-2) 0;
+}
+
+.ut__file-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border-0);
+  transition: background var(--t-fast);
+}
+
+.ut__file-row:last-child { border-bottom: none; }
+.ut__file-row:hover { background: var(--bg-hover); }
+
+.ut__file-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--t1);
+  min-width: 0;
+}
+
+.ut__file-size {
+  font-size: 11px;
+  color: var(--t3);
+  flex-shrink: 0;
+  width: 64px;
+  text-align: right;
+}
+
+.ut__file-remove {
+  background: transparent;
+  border: none;
+  color: var(--t4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--t-fast);
+}
+
+.ut__file-remove:hover {
+  color: var(--red-light);
+  background: var(--red-bg);
+}
+
+.ut__spin {
+  animation: ut-spin 0.9s linear infinite;
+}
+
+@keyframes ut-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

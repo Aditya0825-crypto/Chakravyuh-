@@ -1,0 +1,306 @@
+/* ============================================================
+   CHAKRAVYUH Dashboard — 5-Section Narrative Story Styles
+   ============================================================ */
+
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dash__section {
+  position: relative;
+}
+
+.dash__section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--signal);
+  margin-bottom: var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash__section-eyebrow span {
+  background: var(--signal-bg-mid);
+  color: var(--signal-light);
+  padding: 2px 7px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--signal-border);
+}
+
+/* SECTION 01: MISSION CARD */
+.dash__mission-card {
+  padding: var(--sp-7) var(--sp-8);
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+}
+
+.dash__mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+
+.dash__mission-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--t1);
+  letter-spacing: -0.03em;
+}
+
+.dash__mission-sub {
+  font-size: 14px;
+  color: var(--t2);
+  line-height: 1.6;
+  max-width: 680px;
+}
+
+.dash__specs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border-1);
+}
+
+.dash__spec-box {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+}
+
+.dash__spec-label {
+  font-size: 10px;
+  color: var(--t3);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.dash__spec-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t1);
+  margin-top: 1px;
+}
+
+/* SECTION 02: PIPELINE TRACKER */
+.dash__pipeline-card {
+  padding: var(--sp-6) var(--sp-7);
+}
+
+.dash__pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: var(--sp-3) 0 var(--sp-1);
+  overflow-x: auto;
+}
+
+.dash__pipe-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 100px;
+  cursor: pointer;
+  position: relative;
+  padding: 0 4px;
+  transition: transform var(--t-fast);
+}
+
+.dash__pipe-node:hover {
+  transform: translateY(-2px);
+}
+
+.dash__pipe-ring {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--amber-dim);
+  animation: ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ring-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+  50% { transform: translateX(-50%) scale(1.15); opacity: 0.2; }
+}
+
+.dash__pipe-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  transition: all var(--t-fast);
+}
+
+.dash__pipe-node--done .dash__pipe-icon    { background: var(--green-bg); color: var(--green-light); border: 2px solid var(--green-border); }
+.dash__pipe-node--running .dash__pipe-icon { background: var(--amber-bg-mid); color: var(--amber-light); border: 2px solid var(--amber-dim); }
+.dash__pipe-node--pending .dash__pipe-icon { background: var(--bg-panel); color: var(--t4); border: 2px solid var(--border-1); }
+
+.dash__pipe-num   { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--t4); }
+.dash__pipe-label { font-size: 11.5px; font-weight: 500; color: var(--t2); text-align: center; white-space: nowrap; }
+.dash__pipe-time  { font-family: var(--font-mono); font-size: 10px; color: var(--t3); }
+.dash__pipe-node--running .dash__pipe-time { color: var(--amber-light); font-weight: 700; }
+.dash__pipe-node--done .dash__pipe-label   { color: var(--t1); }
+
+.dash__pipe-conn {
+  flex: 1;
+  height: 2px;
+  min-width: 16px;
+}
+.dash__pipe-conn--done { background: var(--green-dim); }
+.dash__pipe-conn--dim  { background: var(--border-1); }
+
+/* SECTION 03: FINDING HERO */
+.dash__finding-hero {
+  padding: var(--sp-6) var(--sp-7);
+}
+
+.dash__finding-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.dash__taint-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+}
+
+.dash__taint-chain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dash__taint-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-2);
+  color: var(--t1);
+}
+
+.dash__taint-chip--sink {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red-light);
+  font-weight: 700;
+}
+
+.dash__taint-arrow {
+  color: var(--t4);
+}
+
+.dash__finding-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-0);
+}
+
+.dash__finding-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash__cell-label {
+  font-size: 10px;
+  color: var(--t3);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+/* SECTION 04: EVIDENCE & REPAIR */
+.dash__evidence-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+}
+
+.dash__winner-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+}
+
+/* SECTION 05: PROOF & SAFETY GATE */
+.dash__gate-card {
+  padding: var(--sp-7) var(--sp-8);
+  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(22, 184, 112, 0.03) 100%);
+  border-color: var(--green-border);
+}
+
+.dash__gate-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.dash__gate-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-lg);
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-light);
+  flex-shrink: 0;
+}
+
+.dash__proof-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-3);
+}
+
+.dash__proof-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+}
+
+.dash__proof-label {
+  font-size: 10px;
+  color: var(--t3);
+}
+
+.dash__proof-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--green-light);
+}

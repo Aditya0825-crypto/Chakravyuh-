@@ -1,0 +1,128 @@
+.sb {
+  position: fixed; top: 0; left: 0;
+  width: var(--sidebar-w); height: 100vh;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-1);
+  display: flex; flex-direction: column;
+  z-index: 100; overflow: hidden;
+}
+
+/* Brand */
+.sb__brand {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-1);
+  flex-shrink: 0;
+  position: relative;
+}
+.sb__brand::after {
+  content: '';
+  position: absolute; left: 0; bottom: -1px; width: 100%; height: 1px;
+  background: linear-gradient(90deg, var(--signal-border), transparent 70%);
+}
+.sb__brand-icon {
+  width: 36px; height: 36px;
+  background: var(--signal-bg-mid);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--r-lg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--signal); flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(0,255,157,0.12);
+}
+.sb__brand-name {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--t1);
+}
+.sb__brand-sub {
+  font-family: var(--font-mono); font-size: 10px; color: var(--t4); margin-top: 1px;
+}
+
+/* New Scan CTA — entry point for the pipeline */
+.sb__new-scan {
+  padding: 14px 16px 4px;
+  flex-shrink: 0;
+}
+.sb__new-scan-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--signal-bg-mid);
+  border: 1px solid var(--signal-border);
+  border-radius: var(--r-lg);
+  color: var(--signal-light);
+  font-family: var(--font-ui); font-size: 12.5px; font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.sb__new-scan-btn:hover {
+  background: var(--signal);
+  color: #04120d;
+  box-shadow: 0 4px 16px rgba(0,255,157,0.22);
+  transform: translateY(-1px);
+}
+
+/* Status */
+.sb__status-bar {
+  padding: 10px 20px; border-bottom: 1px solid var(--border-1);
+  display: flex; flex-direction: column; gap: 5px; flex-shrink: 0;
+}
+.sb__status-row { display: flex; align-items: center; gap: 7px; }
+.sb__status-text { font-family: var(--font-mono); font-size: 10px; color: var(--t3); }
+.sb__status-icon { color: var(--signal); }
+
+/* Nav */
+.sb__nav {
+  flex: 1; padding: 12px 10px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.sb__section-label {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--t4);
+  padding: 10px 10px 4px; margin-top: 4px;
+}
+
+.sb__item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: var(--r-lg);
+  text-decoration: none; color: var(--t3); font-size: 13px; font-weight: 500;
+  transition: all var(--t-fast); cursor: pointer;
+  border: 1px solid transparent;
+}
+.sb__item:hover { background: var(--bg-hover); color: var(--t2); }
+.sb__item--active {
+  background: var(--signal-bg); color: var(--signal-light);
+  border-color: var(--signal-border);
+}
+.sb__item--active:hover { background: var(--signal-bg-mid); }
+
+.sb__item--stage { position: relative; }
+.sb__item-icon { flex-shrink: 0; }
+.sb__item-label { flex: 1; font-size: 12.5px; letter-spacing: 0.01em; }
+
+.sb__stage-num {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.06em; color: var(--t4); width: 18px; flex-shrink: 0;
+}
+.sb__stage-num--done    { color: var(--signal-dim); }
+.sb__stage-num--running { color: var(--amber-dim); }
+
+.sb__stage-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.sb__stage-dot--done    { background: var(--signal-dim); }
+.sb__stage-dot--running { background: var(--amber-light); animation: dot-blink 1.8s infinite; }
+.sb__stage-dot--pending { background: var(--t4); }
+
+/* Footer */
+.sb__footer {
+  padding: 12px 20px; border-top: 1px solid var(--border-1);
+  display: flex; flex-direction: column; gap: 5px; flex-shrink: 0;
+}
+.sb__footer-row { display: flex; justify-content: space-between; align-items: center; }
+.sb__footer-key {
+  font-family: var(--font-mono); font-size: 9px; color: var(--t4);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.sb__footer-val { font-family: var(--font-mono); font-size: 9px; color: var(--t3); }

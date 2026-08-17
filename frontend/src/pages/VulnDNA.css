@@ -1,0 +1,65 @@
+.vdna__core-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-5) var(--sp-6);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.vdna__badge-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--signal-bg-mid);
+  border: 1px solid var(--signal-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--signal-light);
+  flex-shrink: 0;
+}
+
+.vdna__core-metrics {
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.vdna__metric-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-md);
+  padding: 6px 14px;
+}
+
+.vdna__cve-card {
+  transition: all var(--t-fast);
+}
+
+.vdna__cve-card:hover {
+  border-color: var(--border-3);
+  background: var(--bg-elevated);
+}
+
+.vdna__cve-card--active {
+  border-color: var(--signal-border);
+  background: var(--signal-bg);
+}
+
+.vdna__match-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border-left: 1px solid var(--border-1);
+  padding-left: var(--sp-4);
+}
+
+.vdna__pattern-card {
+  padding: 10px 14px;
+  background: var(--cyan-bg);
+  border: 1px solid var(--cyan-border);
+  border-radius: var(--r-md);
+}
