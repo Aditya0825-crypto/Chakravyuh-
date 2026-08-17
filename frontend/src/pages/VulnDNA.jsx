@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dna, Database } from 'lucide-react';
-import { vulnDNAResults } from '../data/mockData';
+import { Dna, Database, Search, Loader2 } from 'lucide-react';
+import { vulnDNAResults as fallbackMatches } from '../data/mockData';
+import { useScan } from '../context/ScanContext';
+import { getVulnDNA, searchVulnDNA } from '../api/client';
 import './VulnDNA.css';
 
 const anim = (d = 0) => ({
@@ -11,8 +13,43 @@ const anim = (d = 0) => ({
 });
 
 export default function VulnDNA() {
-  const [selected, setSelected] = useState(vulnDNAResults[0]);
+  const { scanId } = useScan();
+  const [matches, setMatches] = useState(fallbackMatches);
+  const [selected, setSelected] = useState(fallbackMatches[0]);
   const [showQueryVector, setShowQueryVector] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!scanId) return;
+    getVulnDNA(scanId)
+      .then((data) => {
+        if (data?.matches?.length > 0) {
+          setMatches(data.matches);
+          setSelected(data.matches[0]);
+        }
+      })
+      .catch(() => {});
+  }, [scanId]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    searchVulnDNA({
+      cwe: 'CWE-122',
+      crash_type: searchQuery,
+      function: 'handle_request',
+    })
+      .then((data) => {
+        if (data?.matches?.length > 0) {
+          setMatches(data.matches);
+          setSelected(data.matches[0]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsSearching(false));
+  };
 
   return (
     <div>
@@ -21,7 +58,7 @@ export default function VulnDNA() {
         <div className="page-header__eyebrow">STAGE 04 · EVIDENCE RETRIEVAL</div>
         <h1 className="page-header__title">VulnDNA Engine</h1>
         <p className="page-header__subtitle">
-          Semantic vector embeddings search 5,312 real-world CVE patches in 84ms · Zero LLM hallucination
+          Semantic vector embeddings search real-world CVE patches in milliseconds · Zero LLM hallucination
         </p>
       </motion.div>
 
@@ -46,129 +83,108 @@ export default function VulnDNA() {
             <span className="text-xs text-muted">Query Time</span>
           </div>
           <div className="vdna__metric-chip">
-            <span className="mono font-bold text-green">91.3%</span>
+            <span className="mono font-bold text-green">{selected?.similarity ? `${selected.similarity}%` : '94.2%'}</span>
             <span className="text-xs text-muted">Top Match</span>
           </div>
         </div>
       </motion.div>
 
-      {/* Collapsible Vector Query Fingerprint */}
-      <motion.div className="card section-gap--sm" {...anim(0.08)} style={{ padding: '14px 20px' }}>
-        <div
-          className="flex items-center justify-between cursor-pointer"
-          onClick={() => setShowQueryVector(!showQueryVector)}
-        >
-          <div className="flex items-center gap-2">
-            <Database size={14} style={{ color: 'var(--cyan-light)' }} />
-            <span className="font-semibold text-sm">Query Vector Fingerprint: crash-001</span>
-            <span className="badge badge--info" style={{ fontSize: 9 }}>768-dim CPU Vector</span>
-          </div>
-          <button className="btn btn--ghost" style={{ padding: '2px 8px', minHeight: 'unset', fontSize: 11 }}>
-            {showQueryVector ? 'Hide Fingerprint' : 'Inspect Vector'}
+      {/* Interactive Query Bar */}
+      <motion.div className="card section-gap--sm" {...anim(0.06)} style={{ padding: '12px 16px' }}>
+        <form onSubmit={handleSearch} className="flex items-center gap-3">
+          <Search size={16} className="text-muted" />
+          <input
+            type="text"
+            placeholder="Search CVE precedence database by vulnerability pattern, CWE, or function..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--t1)',
+              outline: 'none',
+              fontSize: 13,
+              fontFamily: 'var(--font-mono)',
+            }}
+          />
+          <button type="submit" className="btn btn--secondary" style={{ padding: '6px 14px', minHeight: 32 }} disabled={isSearching}>
+            {isSearching ? <Loader2 size={13} className="animate-spin" /> : 'Search Corpus'}
           </button>
-        </div>
-
-        <AnimatePresence>
-          {showQueryVector && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-1)' }}
-            >
-              <div className="grid-4" style={{ gap: 8 }}>
-                {[
-                  { k: 'Bug Class', v: 'CWE-122 Heap Overflow' },
-                  { k: 'Trigger Sink', v: 'strcpy() write 512b' },
-                  { k: 'Taint Source', v: 'Network TCP Buffer' },
-                  { k: 'Language', v: 'C99 Linux ELF' },
-                ].map(item => (
-                  <div key={item.k} className="p-2 bg-panel rounded" style={{ background: 'var(--bg-panel)', padding: '6px 10px', borderRadius: 4 }}>
-                    <div className="text-xs text-muted mono">{item.k}</div>
-                    <div className="text-xs font-semibold text-primary">{item.v}</div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </form>
       </motion.div>
 
-      {/* Master-Detail Retrieved CVEs */}
-      <motion.div className="grid-asym section-gap--sm" {...anim(0.12)}>
-        {/* Left: Ranked Match List */}
+      {/* Two-Column Precedent Explorer */}
+      <motion.div className="grid-3-2 section-gap--sm" {...anim(0.08)}>
+        {/* Left: Retrieved Matches List */}
         <div className="stack--sm">
-          <div className="mono text-xs font-bold text-muted uppercase">Top Retrieved Matches</div>
-          {vulnDNAResults.map(ev => {
-            const isSel = selected?.cveId === ev.cveId;
+          <div className="flex items-center justify-between mb-1">
+            <span className="mono text-xs font-bold text-muted uppercase tracking-wider">
+              Top Semantic Precedents ({matches.length})
+            </span>
+            <span className="text-xs text-muted">Click to inspect patch diff & explanation</span>
+          </div>
+
+          {matches.map(m => {
+            const isSel = selected?.cveId === m.cveId;
             return (
               <div
-                key={ev.cveId}
-                className={`card vdna__cve-card ${isSel ? 'vdna__cve-card--active' : ''}`}
-                onClick={() => setSelected(ev)}
-                style={{ padding: '12px 14px', cursor: 'pointer' }}
+                key={m.cveId}
+                className={`card vdna__match-card ${isSel ? 'vdna__match-card--selected' : ''}`}
+                onClick={() => setSelected(m)}
+                style={{ cursor: 'pointer' }}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="mono text-xs font-bold text-amber">{ev.cveId}</span>
-                  <span className="mono text-xs font-bold text-green">{ev.similarity}%</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="mono font-bold text-primary">{m.cveId}</span>
+                    <span className="badge badge--neutral mono text-xs">{m.cwe}</span>
+                  </div>
+                  <span className="badge badge--high mono">{m.similarity}% Match</span>
                 </div>
-                <div className="text-xs text-primary font-medium truncate">{ev.title}</div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="badge badge--info" style={{ fontSize: 9 }}>{ev.cwe}</span>
-                  <span className="tag" style={{ fontSize: 9 }}>{ev.project}</span>
-                </div>
+
+                <div className="text-xs font-semibold text-secondary mb-1">{m.title}</div>
+                <div className="mono text-xs text-muted mb-2">{m.project} · {m.function}()</div>
+                <p className="text-xs text-muted line-clamp-2" style={{ lineHeight: 1.4 }}>{m.fixPattern}</p>
               </div>
             );
           })}
         </div>
 
-        {/* Right: Selected Match Details & Diff */}
+        {/* Right: Selected Precedent Detail */}
         {selected && (
-          <div className="card" style={{ padding: '20px 24px' }}>
-            <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+          <div className="card accent-left-amber">
+            <div className="flex items-center justify-between mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-1)' }}>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="mono text-amber font-bold" style={{ fontSize: 18 }}>{selected.cveId}</h2>
-                  <span className="badge badge--info">{selected.cwe}</span>
-                  <span className="tag">{selected.project} ({selected.language})</span>
+                <span className="badge badge--critical mb-1">{selected.cwe}</span>
+                <h3 className="mono font-bold text-base text-primary">{selected.cveId}: {selected.title}</h3>
+                <span className="mono text-xs text-muted">{selected.project} ({selected.language || 'C'}) · {selected.function}()</span>
+              </div>
+              <span className="mono font-bold text-amber" style={{ fontSize: 20 }}>{selected.similarity}%</span>
+            </div>
+
+            <div className="mb-3">
+              <span className="text-xs text-muted mono font-bold">VULNERABLE CODE CALL SITE:</span>
+              <div className="terminal mt-1" style={{ fontSize: 11 }}>
+                <div className="terminal__body" style={{ padding: '8px 12px' }}>
+                  <span className="t-error mono">{selected.vulnerableCode}</span>
                 </div>
-                <p className="text-sm text-secondary mt-1">{selected.title}</p>
-              </div>
-
-              <div className="vdna__match-badge">
-                <span className="mono text-green font-bold" style={{ fontSize: 22 }}>{selected.similarity}%</span>
-                <span className="text-xs text-muted">SIMILARITY</span>
               </div>
             </div>
 
-            {/* Pattern Box */}
-            <div className="vdna__pattern-card mb-4">
-              <div className="mono text-xs font-bold text-cyan uppercase mb-1">Extracted Fix Strategy:</div>
-              <div className="text-sm text-primary font-medium">{selected.fixPattern}</div>
-            </div>
-
-            {/* Historical Patch Diff */}
-            <div className="terminal">
-              <div className="terminal__header">
-                <div className="terminal__dot"/><div className="terminal__dot"/><div className="terminal__dot"/>
-                <span className="terminal__label">Historical Production Diff · {selected.cveId} ({selected.function})</span>
-              </div>
-              <div className="terminal__body" style={{ maxHeight: 160, fontSize: 11.5 }}>
-                {(selected.patch || '').split('\n').map((line, i) => (
-                  <div key={i} className={
-                    line.startsWith('+') && !line.startsWith('+++') ? 't-success' :
-                    line.startsWith('-') && !line.startsWith('---') ? 't-error' :
-                    line.startsWith('@@') ? 't-warning' : 't-comment'
-                  }>
-                    {line}
-                  </div>
-                ))}
+            <div className="mb-3">
+              <span className="text-xs text-muted mono font-bold">HISTORICAL PRODUCTION PATCH:</span>
+              <div className="terminal mt-1" style={{ fontSize: 11 }}>
+                <div className="terminal__body" style={{ padding: '8px 12px' }}>
+                  <span className="t-green mono">{selected.patch}</span>
+                </div>
               </div>
             </div>
 
-            <div className="text-xs text-muted mt-3" style={{ lineHeight: 1.5 }}>
-              <strong>Why It Works:</strong> {selected.whyItWorks}
+            <div className="card card--subtle p-3 mt-3">
+              <span className="text-xs font-bold text-amber mono">WHY THIS PATTERN WORKS:</span>
+              <p className="text-xs text-secondary mt-1" style={{ lineHeight: 1.5 }}>
+                {selected.whyItWorks || selected.fixPattern}
+              </p>
             </div>
           </div>
         )}

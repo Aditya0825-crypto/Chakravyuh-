@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import gate, learning_log, pov, povs, recon, scans, vulndna
+from api.routes import findings, gate, learning_log, patches, pov, povs, recon, report, scans, vulndna
 from api.schemas.scan import HealthResponse
 from api.websocket import scan_stream
 from core.config import get_settings
@@ -42,6 +42,9 @@ def create_app() -> FastAPI:
 
     api = FastAPI()
     api.include_router(scans.router)
+    api.include_router(findings.router)
+    api.include_router(patches.router)
+    api.include_router(report.router)
     api.include_router(gate.router)
     api.include_router(learning_log.router)
     api.include_router(recon.router)

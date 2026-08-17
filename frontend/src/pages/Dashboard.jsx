@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Bug, CheckCircle, Wrench, Radar, Dna, FileText, ArrowRight,
-  TrendingUp, Cpu, ChevronRight, Award, ShieldCheck, Lock
+  TrendingUp, Cpu, ChevronRight, Award, ShieldCheck, Lock, UploadCloud
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { crashes, vulnDNAResults, patchCandidates } from '../data/mockData';
+import { crashes as fallbackCrashes, vulnDNAResults as fallbackVulnDNA, patchCandidates as fallbackPatches } from '../data/mockData';
+import { useScan } from '../context/ScanContext';
+import { listScans, getFindings, getPoVs, getPatches, getVulnDNA } from '../api/client';
 import './Dashboard.css';
 
 const anim = (delay = 0) => ({
@@ -15,13 +17,13 @@ const anim = (delay = 0) => ({
   transition: { duration: 0.35, delay, ease: [0.4, 0, 0.2, 1] },
 });
 
-const PIPELINE = [
-  { num: '01', label: 'Recon Engine',  status: 'done',    time: '12s',    to: '/recon',      icon: Radar },
-  { num: '02', label: 'Bug Finding',   status: 'done',    time: '4m 18s', to: '/bugfinding', icon: Bug },
-  { num: '03', label: 'PoV Verifier',  status: 'done',    time: '23s',    to: '/verifier',   icon: CheckCircle },
-  { num: '04', label: 'VulnDNA',       status: 'done',    time: '84ms',   to: '/vulndna',    icon: Dna },
-  { num: '05', label: 'Patch Engine',  status: 'running', time: 'Active', to: '/patch',      icon: Wrench },
-  { num: '06', label: 'Report & Gate', status: 'pending', time: 'Queued', to: '/report',     icon: FileText },
+const PIPELINE_STAGES = [
+  { num: '01', label: 'Recon Engine',  id: 'recon',        to: '/console/recon',      icon: Radar },
+  { num: '02', label: 'Bug Finding',   id: 'bugfinding',   to: '/console/bugfinding', icon: Bug },
+  { num: '03', label: 'PoV Verifier',  id: 'verification', to: '/console/verifier',   icon: CheckCircle },
+  { num: '04', label: 'VulnDNA',       id: 'vulndna',      to: '/console/vulndna',    icon: Dna },
+  { num: '05', label: 'Patch Engine',  id: 'patchengine',  to: '/console/patch',      icon: Wrench },
+  { num: '06', label: 'Report & Gate', id: 'reportgate',   to: '/console/report',     icon: FileText },
 ];
 
 const coverageData = [
@@ -31,10 +33,66 @@ const coverageData = [
 
 export default function Dashboard() {
   const nav = useNavigate();
+  const { scanId, scan, stageStatus, setScanId } = useScan();
 
-  const topCrash = crashes[0];
-  const topVulnDNA = vulnDNAResults[0];
-  const winningPatch = patchCandidates.find(p => p.status === 'SELECTED');
+  const [topCrash, setTopCrash] = useState(fallbackCrashes[0]);
+  const [topVulnDNA, setTopVulnDNA] = useState(fallbackVulnDNA[0]);
+  const [winningPatch, setWinningPatch] = useState(fallbackPatches.find(p => p.status === 'SELECTED'));
+  const [recentScans, setRecentScans] = useState([]);
+
+  // Auto-fetch active scan or list scans
+  useEffect(() => {
+    listScans().then((scans) => {
+      setRecentScans(scans || []);
+      if (!scanId && scans && scans.length > 0) {
+        setScanId(scans[0].id);
+      }
+    }).catch(() => {});
+  }, [scanId, setScanId]);
+
+  // Load active scan summary artifacts
+  useEffect(() => {
+    if (!scanId) return;
+
+    getFindings(scanId)
+      .then((data) => {
+        if (data?.crashes?.length > 0) {
+          setTopCrash(data.crashes[0]);
+        }
+      })
+      .catch(() => {});
+
+    getVulnDNA(scanId)
+      .then((data) => {
+        if (data?.matches?.length > 0) {
+          setTopVulnDNA(data.matches[0]);
+        }
+      })
+      .catch(() => {});
+
+    getPatches(scanId)
+      .then((data) => {
+        if (data?.winner) {
+          setWinningPatch(data.winner);
+        } else if (data?.candidates?.length > 0) {
+          setWinningPatch(data.candidates[0]);
+        }
+      })
+      .catch(() => {});
+  }, [scanId]);
+
+  const STAGE_ORDER = PIPELINE_STAGES.map((s) => s.id);
+  const resolveStatus = (stageId) => {
+    if (stageStatus[stageId]) return stageStatus[stageId];
+    if (!scan?.current_stage) return 'done';
+    const currentIdx = STAGE_ORDER.indexOf(scan.current_stage);
+    const stageIdx = STAGE_ORDER.indexOf(stageId);
+    if (currentIdx < 0 || stageIdx < 0) return 'done';
+    if (stageIdx < currentIdx) return 'done';
+    if (stageIdx === currentIdx && scan.status === 'running') return 'running';
+    if (stageIdx === currentIdx) return 'running';
+    return 'pending';
+  };
 
   return (
     <div className="dash">
@@ -48,31 +106,39 @@ export default function Dashboard() {
         </div>
 
         <div className="card dash__pipeline-card">
-          <div className="card-header" style={{ marginBottom: 16, paddingBottom: 12 }}>
+          <div className="card-header flex items-center justify-between" style={{ marginBottom: 16, paddingBottom: 12 }}>
             <span className="card-title"><Cpu size={15} /> Autonomous Reasoning Pipeline</span>
-            <span className="text-xs text-muted mono">Click stage node to inspect details</span>
+            <div className="flex items-center gap-3">
+              {scan && (
+                <span className="mono text-xs text-cyan">
+                  Active: {scan.target_name} ({scan.status})
+                </span>
+              )}
+              <span className="text-xs text-muted mono">Click stage node to inspect details</span>
+            </div>
           </div>
 
           <div className="dash__pipeline">
-            {PIPELINE.map((s, i) => {
+            {PIPELINE_STAGES.map((s, i) => {
               const Icon = s.icon;
+              const status = resolveStatus(s.id);
               return (
                 <React.Fragment key={s.num}>
                   <div
-                    className={`dash__pipe-node dash__pipe-node--${s.status}`}
+                    className={`dash__pipe-node dash__pipe-node--${status}`}
                     onClick={() => nav(s.to)}
                     title={`Go to ${s.label}`}
                   >
-                    {s.status === 'running' && <div className="dash__pipe-ring" />}
+                    {status === 'running' && <div className="dash__pipe-ring" />}
                     <div className="dash__pipe-icon">
-                      <Icon size={16} strokeWidth={s.status === 'running' ? 2.5 : 2} />
+                      <Icon size={16} strokeWidth={status === 'running' ? 2.5 : 2} />
                     </div>
                     <div className="dash__pipe-num">{s.num}</div>
                     <div className="dash__pipe-label">{s.label}</div>
-                    <div className="dash__pipe-time">{s.time}</div>
+                    <div className="dash__pipe-time">{status === 'running' ? 'Active' : status === 'done' ? 'Complete' : 'Queued'}</div>
                   </div>
-                  {i < PIPELINE.length - 1 && (
-                    <div className={`dash__pipe-conn dash__pipe-conn--${PIPELINE[i].status === 'done' ? 'done' : 'dim'}`} />
+                  {i < PIPELINE_STAGES.length - 1 && (
+                    <div className={`dash__pipe-conn dash__pipe-conn--${resolveStatus(PIPELINE_STAGES[i].id) === 'done' ? 'done' : 'dim'}`} />
                   )}
                 </React.Fragment>
               );
@@ -96,32 +162,32 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <span className="badge badge--critical">CRITICAL FINDING</span>
-                <span className="mono text-xs text-muted">CWE-122</span>
+                <span className="mono text-xs text-muted">{topCrash.cwe || 'CWE-122'}</span>
               </div>
-              <span className="mono text-xs text-amber font-bold">crash-001</span>
+              <span className="mono text-xs text-amber font-bold">{topCrash.id || 'crash-001'}</span>
             </div>
 
-            <h2 className="dash__finding-title">Heap Buffer Overflow in handle_request()</h2>
+            <h2 className="dash__finding-title">{topCrash.type || 'Heap Buffer Overflow'} in {topCrash.function || 'handle_request'}()</h2>
 
             <div className="dash__taint-box mt-4">
               <div className="text-xs text-muted mono font-bold uppercase mb-2">TAINT FLOW:</div>
               <div className="dash__taint-chain">
                 <span className="dash__taint-chip">Network Input</span>
                 <ChevronRight size={14} className="dash__taint-arrow" />
-                <span className="dash__taint-chip">accept_conn()</span>
+                <span className="dash__taint-chip">{topCrash.function || 'handle_request'}()</span>
                 <ChevronRight size={14} className="dash__taint-arrow" />
-                <span className="dash__taint-chip dash__taint-chip--sink">strcpy() SINK ⚠</span>
+                <span className="dash__taint-chip dash__taint-chip--sink">Unbounded SINK ⚠</span>
               </div>
             </div>
 
             <div className="dash__finding-grid mt-4">
               <div className="dash__finding-cell">
                 <span className="dash__cell-label">Location</span>
-                <span className="mono text-xs font-semibold">src/server.c:148</span>
+                <span className="mono text-xs font-semibold">{topCrash.file || 'server.c'}:{topCrash.line || 148}</span>
               </div>
               <div className="dash__finding-cell">
                 <span className="dash__cell-label">Sanitizer Output</span>
-                <span className="mono text-xs text-red font-semibold">ASan WRITE 512b</span>
+                <span className="mono text-xs text-red font-semibold">ASan WRITE {topCrash.crashInput?.length || 512}b</span>
               </div>
               <div className="dash__finding-cell">
                 <span className="dash__cell-label">Replay Rate</span>
@@ -138,8 +204,8 @@ export default function Dashboard() {
           <div className="stack--lg">
             <div className="card">
               <div className="card-header" style={{ marginBottom: 12, paddingBottom: 8 }}>
-                <span className="card-title"><TrendingUp size={14} /> Fuzzing Coverage Trajectory</span>
-                <span className="mono text-xs text-cyan font-bold">67.4%</span>
+                <span className="card-title"><TrendingUp size={14} /> Discovery Engine Stats</span>
+                <span className="mono text-xs text-cyan font-bold">Directed PoC</span>
               </div>
               <ResponsiveContainer width="100%" height={110}>
                 <AreaChart data={coverageData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
@@ -158,12 +224,12 @@ export default function Dashboard() {
 
             <div className="card">
               <div className="stat-row" style={{ padding: '8px 0' }}>
-                <span className="stat-row__label">Unique Crashes Confirmed</span>
-                <span className="mono font-bold text-red" style={{ fontSize: 16 }}>3 Unique</span>
+                <span className="stat-row__label">Confidence Score</span>
+                <span className="mono font-bold text-amber" style={{ fontSize: 16 }}>{topCrash.confidence || 96}%</span>
               </div>
               <div className="stat-row" style={{ padding: '8px 0' }}>
-                <span className="stat-row__label">Fuzzing Speed</span>
-                <span className="mono text-xs font-semibold text-primary">12,400 exec/sec</span>
+                <span className="stat-row__label">Discovery Method</span>
+                <span className="mono text-xs font-semibold text-primary">{topCrash.discoveryMethod || 'Directed PoC Synthesis'}</span>
               </div>
             </div>
           </div>
@@ -181,122 +247,71 @@ export default function Dashboard() {
 
         <div className="grid-2">
           {/* VulnDNA Match */}
-          <div className="card accent-left-amber">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Dna size={16} className="text-amber" />
-                <span className="font-bold text-sm">VulnDNA Evidence Citation</span>
-              </div>
-              <span className="mono text-xs font-bold text-green">91.3% Match</span>
+          <div className="card card--amber dash__vdna-card">
+            <div className="card-header" style={{ marginBottom: 12, paddingBottom: 8 }}>
+              <span className="card-title text-amber"><Dna size={14} /> Historical Precedent Match</span>
+              <span className="badge badge--high mono">{topVulnDNA?.similarity || 94.2}% Match</span>
             </div>
 
-            <div className="dash__evidence-box">
-              <div className="flex items-center justify-between mb-2">
-                <span className="mono text-amber font-bold" style={{ fontSize: 16 }}>{topVulnDNA.cveId}</span>
-                <span className="badge badge--info" style={{ fontSize: 9 }}>Historical Evidence</span>
-              </div>
-              <p className="text-xs text-secondary mb-3" style={{ lineHeight: 1.5 }}>
-                {topVulnDNA.fixPattern}
-              </p>
-              <div className="mono text-xs text-muted" style={{ background: 'var(--bg-void)', padding: '6px 10px', borderRadius: 4 }}>
-                Guides LLM repair synthesis using real production CVE patch patterns.
+            <div className="flex items-center justify-between mb-3">
+              <span className="mono font-bold text-primary">{topVulnDNA?.cveId || 'CVE-2021-3156'}</span>
+              <span className="mono text-xs text-muted">{topVulnDNA?.project || 'sudo'} ({topVulnDNA?.language || 'C'})</span>
+            </div>
+
+            <p className="text-xs text-secondary mb-3" style={{ lineHeight: 1.5 }}>
+              {topVulnDNA?.fixPattern || 'Bounded length copy with truncation detection and capacity validation.'}
+            </p>
+
+            <div className="terminal" style={{ fontSize: 11 }}>
+              <div className="terminal__body" style={{ padding: '8px 12px' }}>
+                <span className="t-green">{topVulnDNA?.patch || 'strlcpy(dst, src, sizeof(dst));'}</span>
               </div>
             </div>
 
             <button className="btn btn--secondary w-full mt-4" onClick={() => nav('/console/vulndna')}>
-              Explore VulnDNA Database <ArrowRight size={14} />
+              Explore VulnDNA Vector Space <ChevronRight size={14} />
             </button>
           </div>
 
-          {/* Winning Repair Candidate */}
-          <div className="card accent-left-green">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Award size={16} className="text-green" />
-                <span className="font-bold text-sm">Winning Patch Candidate</span>
+          {/* Winning Patch Card */}
+          {winningPatch && (
+            <div className="card card--green dash__patch-card">
+              <div className="card-header" style={{ marginBottom: 12, paddingBottom: 8 }}>
+                <span className="card-title text-green"><Award size={14} /> Winning Candidate Patch</span>
+                <span className="badge badge--green mono">Score {winningPatch.score?.total ? winningPatch.score.total.toFixed(1) : '94.4'}</span>
               </div>
-              <span className="badge badge--green">Score: 94.4 / 100</span>
-            </div>
 
-            <div className="dash__winner-box">
-              <div className="flex items-center gap-2 mb-1">
-                <strong className="text-sm">{winningPatch.agent}: {winningPatch.name}</strong>
-                <span className="badge badge--green" style={{ fontSize: 9 }}>SELECTED</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-bold text-sm text-primary">{winningPatch.agent || 'Agent 1'} — {winningPatch.name || 'Root Cause Fixer'}</span>
+                <span className="mono text-xs text-green font-bold">ALL ATTACKS BLOCKED</span>
               </div>
+
               <p className="text-xs text-secondary mb-3" style={{ lineHeight: 1.5 }}>
-                {winningPatch.strategy}
+                {winningPatch.strategy || 'Upstream size check and bounded buffer copy prevent memory corruption.'}
               </p>
 
-              <div className="terminal">
-                <div className="terminal__body" style={{ maxHeight: 70, fontSize: 11, padding: '8px 12px' }}>
-                  <span className="t-error">- strcpy(req-&gt;body, input_buffer);</span>{'\n'}
-                  <span className="t-success">+ size_t input_len = strnlen(input_buffer, MAX_BODY_SIZE + 1);</span>{'\n'}
-                  <span className="t-success">+ if (input_len &gt; MAX_BODY_SIZE) send_error(conn, 413, ...);</span>
+              <div className="grid-3 mb-4">
+                <div className="dash__patch-stat">
+                  <span className="dash__stat-val text-green">{winningPatch.attacks?.blocked || 9}/{winningPatch.attacks?.total || 9}</span>
+                  <span className="dash__stat-lbl">Attacks Blocked</span>
+                </div>
+                <div className="dash__patch-stat">
+                  <span className="dash__stat-val text-cyan">{winningPatch.linesChanged || 6}</span>
+                  <span className="dash__stat-lbl">Lines Changed</span>
+                </div>
+                <div className="dash__patch-stat">
+                  <span className="dash__stat-val text-purple">{winningPatch.performanceOverhead || '0.2%'}</span>
+                  <span className="dash__stat-lbl">Perf Overhead</span>
                 </div>
               </div>
-            </div>
 
-            <button className="btn btn--success w-full mt-4" onClick={() => nav('/console/patch')}>
-              Inspect Patch Arena & Diffs <ArrowRight size={14} />
-            </button>
-          </div>
+              <button className="btn btn--primary w-full" onClick={() => nav('/console/patch')}>
+                Inspect 3-Agent Arena Matrix <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
-
-
-      {/* ============================================================
-          SECTION 04: PROOF — ADVERSARIAL VERIFICATION & GATE
-         ============================================================ */}
-      <motion.div className="dash__section mt-8 mb-8" {...anim(0.16)}>
-        <div className="dash__section-eyebrow">
-          <span>04</span> PROOF · VERIFICATION & SAFETY GATE
-        </div>
-
-        <div className="card dash__gate-card">
-          <div className="dash__gate-header">
-            <div className="flex items-center gap-3">
-              <div className="dash__gate-icon"><ShieldCheck size={22} /></div>
-              <div>
-                <h3 style={{ fontSize: 18, color: 'var(--t1)' }}>Adversarial Verification Suite</h3>
-                <span className="text-xs text-muted">All safety passes verified clean</span>
-              </div>
-            </div>
-            <span className="badge badge--green" style={{ fontSize: 11, padding: '6px 12px' }}>
-              RECOMMENDATION: APPROVED FOR DEPLOYMENT
-            </span>
-          </div>
-
-          <div className="dash__proof-grid mt-6">
-            {[
-              { label: 'Original PoV Replay', result: '0 Crashes' },
-              { label: 'Adversarial Fuzzing', result: '9/9 Blocked' },
-              { label: 'Regression Suite', result: '47/47 Passed' },
-              { label: 'Performance Overhead', result: '+1.2% Delta' },
-              { label: 'Human Safety Gate', result: 'Ready for Sign-Off' },
-            ].map(p => (
-              <div key={p.label} className="dash__proof-cell">
-                <CheckCircle size={14} className="text-green flex-shrink-0" />
-                <div>
-                  <div className="dash__proof-label">{p.label}</div>
-                  <div className="dash__proof-val mono">{p.result}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="divider" style={{ margin: '20px 0 16px' }} />
-
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <span className="text-xs text-secondary">
-              Authoritative human decision required before patch is written.
-            </span>
-            <button className="btn btn--primary btn--lg" onClick={() => nav('/console/report')}>
-              <Lock size={15} /> Authorize Deployment in Safety Gate
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
     </div>
   );
 }

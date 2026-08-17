@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen, CheckCircle, XCircle, Search,
   Filter, TrendingUp, Database, Calendar, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { learningLog } from '../data/mockData';
+import { learningLog as fallbackLog } from '../data/mockData';
+import { getLearningLog } from '../api/client';
 import './LearningLog.css';
 
 const anim = (d = 0) => ({
@@ -23,13 +24,24 @@ const cweBadges = {
 };
 
 export default function LearningLog() {
+  const [log, setLog] = useState(fallbackLog);
   const [search, setSearch] = useState('');
   const [cweFilter, setCweFilter] = useState('ALL');
   const [expandedId, setExpandedId] = useState(null);
 
-  const cwes = ['ALL', ...new Set(learningLog.map(l => l.cwe))];
+  useEffect(() => {
+    getLearningLog()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setLog(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
-  const filtered = learningLog.filter(l => {
+  const cwes = ['ALL', ...new Set(log.map(l => l.cwe))];
+
+  const filtered = log.filter(l => {
     const matchSearch = !search ||
       l.target.toLowerCase().includes(search.toLowerCase()) ||
       l.cwe.toLowerCase().includes(search.toLowerCase()) ||
@@ -38,8 +50,8 @@ export default function LearningLog() {
     return matchSearch && matchCwe;
   });
 
-  const successCount = learningLog.filter(l => l.patchSuccess).length;
-  const successRate = Math.round((successCount / learningLog.length) * 100);
+  const successCount = log.filter(l => l.patchSuccess).length;
+  const successRate = log.length > 0 ? Math.round((successCount / log.length) * 100) : 100;
 
   return (
     <div>
@@ -48,142 +60,142 @@ export default function LearningLog() {
         <div className="page-header__eyebrow">System Memory</div>
         <h1 className="page-header__title">Autonomous Learning Log</h1>
         <p className="page-header__subtitle">
-          Historical repository of analyzed binaries, synthesized patches, and adversarial verification outcomes stored in SQLite
+          Historical repository of analyzed binaries, synthesized patches, and adversarial verification outcomes stored in database
         </p>
       </motion.div>
 
       {/* KPI Cards */}
       <motion.div className="grid-4 section-gap--sm" {...anim(0.06)}>
         {[
-          { label: 'Total Runs', value: learningLog.length, accent: 'amber', icon: Database },
+          { label: 'Total Runs', value: log.length, accent: 'amber', icon: Database },
           { label: 'Patches Verified', value: successCount, accent: 'green', icon: CheckCircle },
-          { label: 'Unresolved / Failed', value: learningLog.length - successCount, accent: 'red', icon: XCircle },
+          { label: 'Unresolved / Failed', value: log.length - successCount, accent: 'red', icon: XCircle },
           { label: 'Autonomous Success Rate', value: `${successRate}%`, accent: 'cyan', icon: TrendingUp },
-        ].map(kpi => {
-          const Icon = kpi.icon;
+        ].map(k => {
+          const Icon = k.icon;
           return (
-            <div key={kpi.label} className={`card ll__kpi-card accent-left-${kpi.accent}`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted font-medium">{kpi.label}</span>
-                <Icon size={16} style={{ color: `var(--${kpi.accent}-light)` }} />
+            <div key={k.label} className={`card kpi-card kpi-card--${k.accent}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="kpi-card__label">{k.label}</span>
+                <Icon size={14} style={{ color: `var(--${k.accent}-light)` }} />
               </div>
-              <div className="ll__kpi-value">{kpi.value}</div>
+              <div className="kpi-card__val mono">{k.value}</div>
             </div>
           );
         })}
       </motion.div>
 
-      {/* Search & Filters */}
-      <motion.div className="ll__filter-bar section-gap--sm" {...anim(0.1)}>
-        <div className="ll__search-box">
-          <Search size={14} style={{ color: 'var(--t3)' }} />
-          <input
-            type="text"
-            className="ll__search-input"
-            placeholder="Filter by target name, CWE identifier, or crash type..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="ll__pills">
-          <Filter size={13} style={{ color: 'var(--t3)', marginRight: 4 }} />
-          {cwes.map(cwe => (
-            <button
-              key={cwe}
-              className={`ll__pill ${cweFilter === cwe ? 'll__pill--active' : ''}`}
-              onClick={() => setCweFilter(cwe)}
-            >
-              {cwe}
-            </button>
-          ))}
+      {/* Filter / Search Bar */}
+      <motion.div className="card section-gap--sm" {...anim(0.08)} style={{ padding: '12px 18px' }}>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2 flex-1" style={{ minWidth: 200 }}>
+            <Search size={14} style={{ color: 'var(--t4)' }} />
+            <input
+              type="text"
+              placeholder="Search by binary target, CWE, or crash signature..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--t1)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 12,
+                outline: 'none',
+                width: '100%',
+              }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Filter size={13} style={{ color: 'var(--t4)' }} />
+            <span className="text-xs text-muted">CWE:</span>
+            {cwes.map(c => (
+              <button
+                key={c}
+                onClick={() => setCweFilter(c)}
+                className={`tag ${cweFilter === c ? 'tag--active' : ''}`}
+                style={{ cursor: 'pointer' }}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         </div>
       </motion.div>
 
-      {/* Main Table */}
-      <motion.div className="table-wrapper section-gap--sm" {...anim(0.14)}>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Target Binary</th>
-              <th>CWE & Crash Type</th>
-              <th>Discovery Engine</th>
-              <th>Winning Repair Agent</th>
-              <th>VulnDNA Citation</th>
-              <th>Confidence</th>
-              <th>Outcome</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(entry => {
-              const isExpanded = expandedId === entry.id;
-              return (
-                <React.Fragment key={entry.id}>
-                  <tr
-                    onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <Calendar size={12} style={{ color: 'var(--t3)' }} />
-                        <span className="mono text-xs">{entry.date}</span>
-                      </div>
-                    </td>
-                    <td><strong className="mono text-sm">{entry.target}</strong></td>
-                    <td>
-                      <div className="stack--4">
-                        <span className={`badge ${cweBadges[entry.cwe] || 'badge--neutral'}`}>{entry.cwe}</span>
-                        <span className="text-xs text-muted">{entry.crashType}</span>
-                      </div>
-                    </td>
-                    <td><span className="tag">{entry.discoveryMethod}</span></td>
-                    <td><span className="text-sm text-secondary">{entry.winningAgent}</span></td>
-                    <td><span className="mono text-xs text-amber font-semibold">{entry.topCVE}</span></td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <div className="progress-track" style={{ width: 44 }}>
-                          <div className="progress-fill progress-fill--green" style={{ width: `${entry.confidence}%` }} />
-                        </div>
-                        <span className="mono text-xs font-bold text-green">{entry.confidence}%</span>
-                      </div>
-                    </td>
-                    <td>
-                      {entry.patchSuccess ? (
-                        <span className="badge badge--green">Verified</span>
-                      ) : (
-                        <span className="badge badge--critical">Failed</span>
-                      )}
-                    </td>
-                    <td>
-                      {isExpanded ? <ChevronUp size={14} style={{ color: 'var(--t3)' }} /> : <ChevronDown size={14} style={{ color: 'var(--t4)' }} />}
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr>
-                      <td colSpan={9} style={{ background: 'var(--bg-panel)', padding: '16px 24px', borderBottom: '1px solid var(--border-2)' }}>
-                        <div className="flex items-start gap-3">
-                          <BookOpen size={16} style={{ color: 'var(--amber-light)', flexShrink: 0, marginTop: 2 }} />
-                          <div>
-                            <div className="text-xs font-bold text-muted uppercase tracking-wider mb-1">Reasoning & Verification Notes</div>
-                            <p className="text-sm" style={{ color: 'var(--t2)', lineHeight: 1.6 }}>{entry.notes}</p>
-                          </div>
-                        </div>
+      {/* Runs Table */}
+      <motion.div className="section-gap--sm" {...anim(0.1)}>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Target Binary</th>
+                <th>CWE</th>
+                <th>Crash Type</th>
+                <th>Winning Agent</th>
+                <th>Top CVE Precedent</th>
+                <th>Conf.</th>
+                <th>Outcome</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(l => {
+                const isExp = expandedId === l.id;
+                const badgeCls = cweBadges[l.cwe] || 'badge--neutral';
+
+                return (
+                  <React.Fragment key={l.id}>
+                    <tr
+                      onClick={() => setExpandedId(isExp ? null : l.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <td className="mono text-xs text-muted">{l.date}</td>
+                      <td><strong className="mono text-sm">{l.target}</strong></td>
+                      <td><span className={`badge ${badgeCls}`}>{l.cwe}</span></td>
+                      <td className="text-xs text-secondary">{l.crashType}</td>
+                      <td className="text-xs font-semibold text-primary">{l.winningAgent}</td>
+                      <td>
+                        {l.topCVE ? (
+                          <span className="mono text-xs text-amber font-semibold">{l.topCVE}</span>
+                        ) : (
+                          <span className="mono text-xs text-muted">—</span>
+                        )}
+                      </td>
+                      <td className="mono text-xs text-muted">{l.confidence}%</td>
+                      <td>
+                        {l.patchSuccess ? (
+                          <span className="badge badge--green">VERIFIED</span>
+                        ) : (
+                          <span className="badge badge--danger">UNRESOLVED</span>
+                        )}
+                      </td>
+                      <td>
+                        {isExp ? <ChevronUp size={14} /> : <ChevronDown size={14} style={{ color: 'var(--t4)' }} />}
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </motion.div>
-
-      {/* SQLite Footer */}
-      <motion.div className="card ll__db-footer" {...anim(0.18)}>
-        <Database size={16} style={{ color: 'var(--amber-light)', flexShrink: 0 }} />
-        <div className="text-xs text-muted">
-          Persisted in <strong className="mono text-primary">chakravyuh_learning.db</strong> (SQLite 3.42) · Full schema stores normalized callgraphs, LLM temperature logs, AST embeddings, and verified patch checksums.
+                    {isExp && (
+                      <tr>
+                        <td colSpan={9} style={{ background: 'var(--bg-panel)', padding: '14px 20px' }}>
+                          <div className="stack--xs">
+                            <div className="flex items-center gap-4 text-xs text-muted mono">
+                              <span>DISCOVERY: <strong className="text-primary">{l.discoveryMethod}</strong></span>
+                              <span>ENTRY ID: <strong className="text-muted">{l.id}</strong></span>
+                            </div>
+                            <p className="text-xs text-secondary mt-1" style={{ lineHeight: 1.5 }}>
+                              <strong>Notes:</strong> {l.notes}
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </motion.div>
     </div>

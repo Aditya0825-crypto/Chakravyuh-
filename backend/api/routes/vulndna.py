@@ -64,19 +64,36 @@ def scan_vulndna(
     crash_type: str = "heap-buffer-overflow",
 ):
     """
-    Return VulnDNA matches for a scan.
-
-    Phase 2: uses query params as PoV fingerprint until verified_povs table is wired.
+    Return VulnDNA matches for a scan using verified PoV / crash signatures.
     """
     scan = db.get(Scan, scan_id)
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
 
+    target_func = f"{scan.target_name}()"
+    target_file = scan.target_name
+    asan_summary = None
+
+    if scan.verified_povs:
+        top_pov = scan.verified_povs[0]
+        if top_pov.cwe:
+            cwe = top_pov.cwe
+        if top_pov.crash_type:
+            crash_type = top_pov.crash_type
+        if top_pov.asan_summary:
+            asan_summary = top_pov.asan_summary
+        if top_pov.crash:
+            if top_pov.crash.function:
+                target_func = f"{top_pov.crash.function}()"
+            if top_pov.crash.file:
+                target_file = top_pov.crash.file
+
     query = VulnDNAQuery(
         crash_type=crash_type,
         cwe=cwe,
-        function=f"{scan.target_name}()",
-        file=scan.target_name,
+        function=target_func,
+        file=target_file,
+        asan_summary=asan_summary,
     )
     matches, meta = search_vulndna(query)
     return VulnDNASearchResponse(

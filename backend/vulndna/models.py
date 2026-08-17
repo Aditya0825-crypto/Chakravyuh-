@@ -89,3 +89,8 @@ class EvidencePackage:
             "fixPattern": self.fix_pattern,
             "whyItWorks": self.why_it_works or self.fix_pattern,
         }
+
+
+# Alias for EvidencePackage
+VulnDNAMatch = EvidencePackage
+

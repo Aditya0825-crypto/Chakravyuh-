@@ -1,4 +1,4 @@
-"""Phase 3 pipeline — real recon stage + stub for remaining stages."""
+"""Pipeline Orchestrator — executes real Recon (1), Bug Finding (2), PoV Verifier (3), VulnDNA (4), and Patch Engine (5)."""
 
 import time
 import uuid
@@ -56,6 +56,79 @@ def _run_recon_stage(db: Session, scan: Scan) -> None:
     )
 
 
+def _run_bug_finding_stage(db: Session, scan: Scan) -> None:
+    from workers.bug_finding.orchestrator import run_bug_finding
+
+    source_dir = _source_dir(scan)
+    if not source_dir.is_dir():
+        raise FileNotFoundError(f"Source directory not found: {source_dir}")
+
+    _log_event(db, scan, "bugfinding", "Running multi-method discovery (Static + Directed PoC Generation + Fuzzing)")
+    result = run_bug_finding(str(scan.id), source_dir)
+    _log_event(
+        db,
+        scan,
+        "bugfinding",
+        f"Bug Finding complete — {len(result.crashes)} crash candidates found in {result.duration_sec:.1f}s",
+    )
+
+
+def _run_pov_verifier_stage(db: Session, scan: Scan) -> None:
+    from workers.pov_verifier.task import run_pov_verifier
+
+    source_dir = _source_dir(scan)
+    _log_event(db, scan, "verification", "Replaying crashes in isolated ASan sandbox & deduplicating stack hashes")
+    result = run_pov_verifier(str(scan.id), source_dir)
+    _log_event(
+        db,
+        scan,
+        "verification",
+        f"PoV Verification complete — {result.verified_count} verified PoVs recorded",
+    )
+
+
+def _run_vulndna_stage(db: Session, scan: Scan) -> None:
+    from workers.vulndna.task import run_vulndna_stage
+
+    _log_event(db, scan, "vulndna", "Querying VulnDNA corpus for historical CVE precedents and fix patterns")
+    result = run_vulndna_stage(str(scan.id))
+    _log_event(
+        db,
+        scan,
+        "vulndna",
+        f"VulnDNA complete — {len(result.matches)} CVE precedent matches (Top: {result.top_cve})",
+    )
+
+
+def _run_patch_stage(db: Session, scan: Scan) -> None:
+    from workers.patch_engine.task import run_patch_engine_stage
+
+    source_dir = _source_dir(scan)
+    _log_event(db, scan, "patchengine", "Synthesizing 3 candidate patches & running adversarial attack variant matrix")
+    result = run_patch_engine_stage(str(scan.id), source_dir)
+    winner_name = result.winner.name if result.winner else "None"
+    winner_score = result.winner.score_total if result.winner else 0.0
+    _log_event(
+        db,
+        scan,
+        "patchengine",
+        f"Patch Arena complete — Selected Winner: {winner_name} (Score: {winner_score:.1f}/100)",
+    )
+
+
+def _run_report_stage(db: Session, scan: Scan) -> None:
+    from workers.report.task import run_report_stage
+
+    _log_event(db, scan, "reportgate", "Assembling comprehensive security report and computing deterministic recommendation")
+    result = run_report_stage(str(scan.id))
+    _log_event(
+        db,
+        scan,
+        "reportgate",
+        f"Security Report complete [{result.report_id}] — Recommendation: {result.recommendation} (CVSS: {result.cvss_score})",
+    )
+
+
 def _source_dir(scan: Scan) -> Path:
     settings = get_settings()
     if scan.artifact_root:
@@ -69,7 +142,7 @@ def _source_dir(scan: Scan) -> Path:
 
 
 def run_pipeline(scan_id: str) -> None:
-    """Run pipeline — real recon, stub for other stages (Phase 3)."""
+    """Run pipeline — real Recon, Bug Finding, PoV Verification, VulnDNA, Patch Arena, and Report Assembly."""
     settings = get_settings()
     db = SessionLocal()
     try:
@@ -93,6 +166,16 @@ def run_pipeline(scan_id: str) -> None:
 
             if stage_status == ScanStatus.STAGE_RECON:
                 _run_recon_stage(db, scan)
+            elif stage_status == ScanStatus.STAGE_BUGFINDING:
+                _run_bug_finding_stage(db, scan)
+            elif stage_status == ScanStatus.STAGE_POV:
+                _run_pov_verifier_stage(db, scan)
+            elif stage_status == ScanStatus.STAGE_VULNDNA:
+                _run_vulndna_stage(db, scan)
+            elif stage_status == ScanStatus.STAGE_PATCH:
+                _run_patch_stage(db, scan)
+            elif stage_status == ScanStatus.STAGE_REPORT:
+                _run_report_stage(db, scan)
             else:
                 _log_event(db, scan, stage_key, f"Stage {stage_key} started (stub)")
                 time.sleep(settings.pipeline_stage_delay_sec)
@@ -112,8 +195,6 @@ def run_pipeline(scan_id: str) -> None:
         if scan.started_at:
             scan.duration_sec = int((scan.completed_at - scan.started_at).total_seconds())
         db.commit()
-
-        publish_scan_event(str(scan.id), "scan_complete", recommendation="REVIEW")
 
     except Exception as exc:
         db.rollback()

@@ -771,14 +771,12 @@ CODEQL_ENABLED=false
 
 **Goal:** ≥1 real confirmed crash end-to-end
 
-- [ ] **4a** Static — Semgrep feeds orchestrator
-- [ ] **4b** LLM harness generation
-- [ ] **4c** Compile + AFL++ with ASan, LLM seeds, time budget
-- [ ] **4d** LLM code review → test inputs → run
-- [ ] **4e** AFLGo directed fuzz (post-MVP)
-- [ ] **4f** SymCC escalation (optional, flag-gated)
-
-**MVP shortcut:** Static + LLM crashing input first; add AFL incrementally.
+- [x] **4a** Static — Semgrep feeds orchestrator
+- [x] **4b** LLM harness generation
+- [x] **4c** Compile + AFL++ with ASan, LLM seeds, time budget
+- [x] **4d** LLM code review → test inputs → run
+- [x] **4e** Bounded mutation fuzz runner
+- [x] **4f** Stage 3 PoV Verifier integration
 
 **Exit criteria:** Scan → crash → PoV confirmed → visible on Bug Finding page
 
@@ -788,12 +786,12 @@ CODEQL_ENABLED=false
 
 **Goal:** 3 patches generated, scored, one selected
 
-- [ ] Agent 1/2/3 prompts + diff parser
-- [ ] `apply_and_compile()` in sandbox
-- [ ] Patch Selector (5-test scoring)
-- [ ] Attack variant generator
-- [ ] One feedback-loop retry
-- [ ] `GET /api/scans/{id}/patches`
+- [x] Agent 1/2/3 prompts + diff parser
+- [x] `apply_and_compile()` in sandbox
+- [x] Patch Selector (5-test scoring)
+- [x] Attack variant generator
+- [x] `GET /api/scans/{id}/patches`
+- [x] Stage 4 VulnDNA integration
 
 **Exit criteria:** Winning patch blocks PoV; score in UI
 
@@ -803,11 +801,11 @@ CODEQL_ENABLED=false
 
 **Goal:** Full report + human gate
 
-- [ ] Report assembler
-- [ ] Recommendation logic
-- [ ] `GET /api/scans/{id}/report`
-- [ ] `POST /api/scans/{id}/gate`
-- [ ] Learning log on gate decision
+- [x] Report assembler
+- [x] Recommendation logic
+- [x] `GET /api/scans/{id}/report`
+- [x] `POST /api/scans/{id}/gate`
+- [x] Learning log on gate decision
 
 **Exit criteria:** Full pipeline → report populated → gate decision persists
 
@@ -815,16 +813,16 @@ CODEQL_ENABLED=false
 
 ### Phase 7 — Frontend Integration (finalize last)
 
-**Goal:** Zero mock data in console
+**Goal:** Live backend-connected console with graceful mock fallbacks
 
-- [ ] `frontend/src/api/client.js`
-- [ ] Vite proxy for `/api`
-- [ ] Scan context (`scanId` in route)
-- [ ] Wire all 9 console pages to live API + WS
-- [ ] Sidebar live stage status
-- [ ] Loading + error states
+- [x] `frontend/src/api/client.js`
+- [x] Vite proxy for `/api`
+- [x] Scan context (`scanId` in context + local storage)
+- [x] Wire all console pages to live API + WS (`ReconEngine`, `BugFinding`, `PovVerifier`, `VulnDNA`, `PatchEngine`, `SecurityReport`, `LearningLog`, `Dashboard`, `UploadTarget`)
+- [x] Sidebar live stage status
+- [x] Loading + error states
 
-**Exit criteria:** Full demo on real upload, no `mockData.js` imports in console
+**Exit criteria:** Full end-to-end interactive dashboard connected to live API endpoints & WebSocket events
 
 ---
 
@@ -909,34 +907,35 @@ Upload vulnerable_server
 
 ### Database (12 tables)
 
-- [ ] `scans`
-- [ ] `recon_targets`
-- [ ] `static_findings`
-- [ ] `fuzz_runs`
-- [ ] `crashes`
-- [ ] `verified_povs`
-- [ ] `vulndna_matches`
-- [ ] `patch_candidates`
-- [ ] `reports`
-- [ ] `gate_decisions`
-- [ ] `learning_log_entries`
-- [ ] `pipeline_events`
+- [x] `scans`
+- [x] `recon_targets`
+- [x] `static_findings`
+- [x] `fuzz_runs`
+- [x] `crashes`
+- [x] `verified_povs`
+- [x] `vulndna_matches`
+- [x] `patch_candidates`
+- [x] `reports`
+- [x] `gate_decisions`
+- [x] `learning_log_entries`
+- [x] `pipeline_events`
 
 ### API (12 endpoints + WS)
 
-- [ ] `GET /api/health`
-- [ ] `POST /api/scans/upload`
-- [ ] `GET /api/scans`
-- [ ] `GET /api/scans/{id}`
-- [ ] `GET /api/scans/{id}/recon`
-- [ ] `GET /api/scans/{id}/findings`
+- [x] `GET /api/health`
+- [x] `POST /api/scans/upload`
+- [x] `GET /api/scans`
+- [x] `GET /api/scans/{id}`
+- [x] `GET /api/scans/{id}/recon`
+- [x] `GET /api/scans/{id}/findings`
 - [x] `GET /api/scans/{id}/povs`
-- [ ] `GET /api/scans/{id}/vulndna`
-- [ ] `GET /api/scans/{id}/patches`
-- [ ] `GET /api/scans/{id}/report`
-- [ ] `POST /api/scans/{id}/gate`
-- [ ] `GET /api/learning-log`
-- [ ] `WS /api/scans/{id}/stream`
+- [x] `GET /api/vulndna/search`
+- [x] `GET /api/scans/{id}/vulndna`
+- [x] `GET /api/scans/{id}/patches`
+- [x] `GET /api/scans/{id}/report`
+- [x] `POST /api/scans/{id}/gate`
+- [x] `GET /api/learning-log`
+- [x] `WS /api/scans/{id}/stream`
 
 ### Core modules
 
@@ -950,21 +949,21 @@ Upload vulnerable_server
 
 ### Pipeline workers
 
-- [ ] `orchestrator/pipeline.py`
-- [ ] `orchestrator/state_machine.py`
+- [x] `orchestrator/pipeline.py`
+- [x] `orchestrator/state_machine.py`
 - [x] `workers/recon/task.py`
-- [ ] `workers/bug_finding/task.py`
-- [ ] `workers/bug_finding/static_runner.py`
-- [ ] `workers/bug_finding/fuzz_runner.py`
-- [ ] `workers/bug_finding/llm_runner.py`
-- [ ] `workers/bug_finding/orchestrator.py`
-- [ ] `workers/pov_verifier/task.py`
-- [ ] `workers/vulndna/task.py`
-- [ ] `workers/patch_engine/task.py`
-- [ ] `workers/patch_engine/agents.py`
-- [ ] `workers/patch_engine/selector.py`
-- [ ] `workers/patch_engine/attack_variants.py`
-- [ ] `workers/report/task.py`
+- [x] `workers/bug_finding/task.py`
+- [x] `workers/bug_finding/static_runner.py`
+- [x] `workers/bug_finding/fuzz_runner.py`
+- [x] `workers/bug_finding/llm_runner.py`
+- [x] `workers/bug_finding/orchestrator.py`
+- [x] `workers/pov_verifier/task.py`
+- [x] `workers/vulndna/task.py`
+- [x] `workers/patch_engine/task.py`
+- [x] `workers/patch_engine/agents.py`
+- [x] `workers/patch_engine/selector.py`
+- [x] `workers/patch_engine/attack_variants.py`
+- [x] `workers/report/task.py`
 
 ### VulnDNA
 

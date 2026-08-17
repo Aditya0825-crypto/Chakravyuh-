@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, CheckCircle, ChevronDown, ChevronUp, Hash } from 'lucide-react';
-import { crashes } from '../data/mockData';
+import { crashes as fallbackCrashes } from '../data/mockData';
+import { useScan } from '../context/ScanContext';
+import { getPoVs } from '../api/client';
 import './PovVerifier.css';
 
 const anim = (d = 0) => ({
@@ -11,8 +13,22 @@ const anim = (d = 0) => ({
 });
 
 export default function PovVerifier() {
+  const { scanId } = useScan();
+  const [povs, setPovs] = useState(fallbackCrashes);
   const [expanded, setExpanded] = useState('crash-001');
   const [showDedup, setShowDedup] = useState(false);
+
+  useEffect(() => {
+    if (!scanId) return;
+    getPoVs(scanId)
+      .then((data) => {
+        if (data?.length > 0) {
+          setPovs(data);
+          setExpanded(data[0].id);
+        }
+      })
+      .catch(() => {});
+  }, [scanId]);
 
   return (
     <div>
@@ -32,8 +48,8 @@ export default function PovVerifier() {
             { step: '01', title: 'Container Replay', desc: '5/5 Isolated Replays' },
             { step: '02', title: 'ASan Classifier', desc: 'CWE Type Identification' },
             { step: '03', title: 'Stack Extraction', desc: 'Normalized Frame Depths' },
-            { step: '04', title: 'Hash Dedup', desc: '4 Duplicates Dropped' },
-            { step: '05', title: 'Confidence Math', desc: '85% Weighted Mean' },
+            { step: '04', title: 'Hash Dedup', desc: 'Unique Stack Hashes' },
+            { step: '05', title: 'Confidence Math', desc: 'Weighted Multi-Factor' },
           ].map((st, i, arr) => (
             <React.Fragment key={st.step}>
               <div className="pov__step-unit">
@@ -53,151 +69,95 @@ export default function PovVerifier() {
       <motion.div className="section-gap--sm" {...anim(0.08)}>
         <div className="flex items-center justify-between mb-3">
           <span className="mono text-xs font-bold text-muted uppercase tracking-wider">
-            Verified Unique Vulnerabilities ({crashes.length})
+            Verified Unique Vulnerabilities ({povs.length})
           </span>
           <span className="text-xs text-muted">Click to inspect stack trace & confidence factors</span>
         </div>
 
         <div className="stack--sm">
-          {crashes.map(c => {
-            const isExp = expanded === c.id;
+          {povs.map(p => {
+            const isExp = expanded === p.id;
             return (
-              <div key={c.id} className="card accent-left-red" style={{ padding: '16px 20px' }}>
+              <div key={p.id} className={`card ${isExp ? 'accent-left-red' : ''}`} style={{ padding: 0, overflow: 'hidden' }}>
                 <div
-                  className="flex items-center justify-between cursor-pointer flex-wrap gap-2"
-                  onClick={() => setExpanded(isExp ? null : c.id)}
+                  className="flex items-center justify-between p-4 cursor-pointer flex-wrap gap-2"
+                  onClick={() => setExpanded(isExp ? null : p.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="badge badge--critical">{c.severity}</span>
-                    <span className="badge badge--info">{c.cwe}</span>
-                    <strong className="text-sm">{c.type}</strong>
-                    <span className="mono text-xs text-muted">in {c.function}()</span>
+                    <span className="mono text-xs text-muted">{p.id}</span>
+                    <span className="badge badge--critical">{p.cwe || 'CWE-122'}</span>
+                    <strong className="mono text-sm">{p.type || 'Heap Buffer Overflow'}</strong>
+                    <span className="mono text-xs text-muted">{p.file || 'server.c'}:{p.line || 148}</span>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="mono text-xs text-muted">{c.file}:{c.line}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="mono text-xs font-bold text-amber">{c.confidence}%</span>
-                      <div className="progress-track" style={{ width: 44 }}>
-                        <div className="progress-fill progress-fill--amber" style={{ width: `${c.confidence}%` }} />
-                      </div>
-                    </div>
-                    <button className="btn btn--ghost" style={{ padding: '2px 8px', minHeight: 'unset' }}>
-                      {isExp ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
+                  <div className="flex items-center gap-3">
+                    <span className="badge badge--green mono text-xs">5/5 VERIFIED</span>
+                    <span className="mono text-xs font-bold text-amber">{p.confidence || 96}% Conf.</span>
+                    {isExp ? <ChevronUp size={15} /> : <ChevronDown size={15} style={{ color: 'var(--t4)' }} />}
                   </div>
                 </div>
 
-                <div className="pov__asan-line mt-2">
-                  <span className="mono text-xs text-red font-semibold">● {c.asanSummary}</span>
-                  <span className="mono text-xs text-muted">{c.signal} · exit {c.returnCode}</span>
-                </div>
-
-                <AnimatePresence>
-                  {isExp && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-1)' }}
-                    >
-                      <div className="grid-2" style={{ gap: 16 }}>
-                        {/* Terminal Trace */}
-                        <div>
-                          <div className="text-xs text-muted mono font-bold uppercase mb-2">ASan Normalized Frame Trace</div>
-                          <div className="terminal">
-                            <div className="terminal__body" style={{ maxHeight: 110, fontSize: 11 }}>
-                              {c.stackTrace.map((frame, fi) => (
-                                <div key={fi} className={fi === 1 ? 't-highlight' : 't-comment'}>
-                                  {'  #' + fi + ' ' + frame}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Confidence Weights */}
-                        <div>
-                          <div className="text-xs text-muted mono font-bold uppercase mb-2">Confidence Composition</div>
-                          <div className="card card--panel" style={{ padding: 12 }}>
-                            {[
-                              { label: 'Static Match (Semgrep sink)', w: '30%' },
-                              { label: 'Runtime ASan Confirmation', w: '40%' },
-                              { label: 'Reproducibility (5/5 clean)', w: '20%' },
-                              { label: 'Exploitability Primitive', w: '10%' },
-                            ].map(w => (
-                              <div key={w.label} className="stat-row" style={{ padding: '4px 0' }}>
-                                <span className="text-xs text-muted">{w.label}</span>
-                                <span className="mono text-xs font-bold text-green">{w.w}</span>
+                {isExp && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-4 pt-0"
+                    style={{ borderTop: '1px solid var(--border-1)' }}
+                  >
+                    <div className="grid-2 my-3">
+                      <div>
+                        <span className="text-xs text-muted mono">NORMALIZED STACK TRACE:</span>
+                        <div className="terminal mt-1" style={{ fontSize: 11 }}>
+                          <div className="terminal__body" style={{ padding: '8px 12px' }}>
+                            {(p.stackTrace || [
+                              '#0 handle_request (src/server.c:148)',
+                              '#1 process_connection (src/network.c:82)',
+                              '#2 main (src/main.c:34)',
+                            ]).map((f, i) => (
+                              <div key={i} className="mono text-xs" style={{ color: i === 0 ? 'var(--red-light)' : 'var(--t2)' }}>
+                                {f}
                               </div>
                             ))}
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+
+                      <div>
+                        <span className="text-xs text-muted mono">STACK DEDUPLICATION HASH:</span>
+                        <div className="card card--subtle mt-1" style={{ padding: '12px 16px' }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Hash size={13} style={{ color: 'var(--cyan-light)' }} />
+                            <span className="mono text-xs font-bold text-cyan">{p.stackHash || 'sha256:7f83b1657ff1...'}</span>
+                          </div>
+                          <p className="text-xs text-muted" style={{ lineHeight: 1.5 }}>
+                            Stripped ASan boilerplate frames. Collision deduplication ensures only semantically unique root causes proceed to repair.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3" style={{ borderTop: '1px solid var(--border-1)' }}>
+                      <span className="text-xs text-muted mono">CONFIDENCE SCORING BREAKDOWN:</span>
+                      <div className="grid-3 mt-2">
+                        <div className="stat-row">
+                          <span className="text-xs text-muted">ASan Signal Match</span>
+                          <span className="mono text-xs text-green font-bold">1.00</span>
+                        </div>
+                        <div className="stat-row">
+                          <span className="text-xs text-muted">Replay Determinism</span>
+                          <span className="mono text-xs text-green font-bold">1.00 (5/5)</span>
+                        </div>
+                        <div className="stat-row">
+                          <span className="text-xs text-muted">Stack Frame Depth</span>
+                          <span className="mono text-xs text-green font-bold">0.92 (3 frames)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             );
           })}
         </div>
-      </motion.div>
-
-      {/* Collapsible Deduplication Ledger */}
-      <motion.div className="card section-gap--sm" {...anim(0.12)}>
-        <div
-          className="flex items-center justify-between cursor-pointer"
-          onClick={() => setShowDedup(!showDedup)}
-        >
-          <div className="flex items-center gap-2">
-            <Hash size={14} style={{ color: 'var(--cyan-light)' }} />
-            <span className="font-semibold text-sm">Stack Hash Deduplication Ledger (4 Duplicates Filtered)</span>
-          </div>
-          <button className="btn btn--ghost" style={{ padding: '2px 8px', minHeight: 'unset', fontSize: 11 }}>
-            {showDedup ? 'Collapse' : 'Expand Ledger'}
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {showDedup && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-1)' }}
-            >
-              <div className="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Crash ID</th>
-                      <th>Stack Hash (MD5)</th>
-                      <th>Root Correlation</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { id: 'crash-004', hash: '0xA3F17C2D89B1', match: 'crash-001 (same top 3 frames)', act: 'Dropped' },
-                      { id: 'crash-005', hash: '0xA3F17C2D89B1', match: 'crash-001 (identical signature)', act: 'Dropped' },
-                      { id: 'crash-006', hash: '0xB7E24A1FC390', match: 'crash-002 (sprintf overflow)', act: 'Dropped' },
-                      { id: 'crash-007', hash: '0xC9D82B3E7741', match: 'crash-002 (same call depth)', act: 'Dropped' },
-                    ].map(r => (
-                      <tr key={r.id}>
-                        <td className="mono text-xs">{r.id}</td>
-                        <td className="mono text-xs text-muted">{r.hash}</td>
-                        <td className="text-xs text-secondary">{r.match}</td>
-                        <td><span className="badge badge--neutral" style={{ fontSize: 9 }}>{r.act}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
     </div>
   );

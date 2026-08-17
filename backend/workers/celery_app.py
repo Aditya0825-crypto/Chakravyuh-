@@ -10,7 +10,15 @@ celery_app = Celery(
     "chakravyuh",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["workers.pipeline.task", "workers.recon.task"],
+    include=[
+        "workers.pipeline.task",
+        "workers.recon.task",
+        "workers.bug_finding.task",
+        "workers.pov_verifier.task",
+        "workers.vulndna.task",
+        "workers.patch_engine.task",
+        "workers.report.task",
+    ],
 )
 
 celery_app.conf.update(
