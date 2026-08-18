@@ -1,48 +1,37 @@
 # 🛡️ CHAKRAVYUH
 
-```{=html}
 <p align="center">
-```
-`<img src="https://img.shields.io/badge/CHAKRAVYUH-v4.1-0f172a?style=for-the-badge&logo=shield&logoColor=white" alt="CHAKRAVYUH v4.1"/>`{=html}
-`<img src="https://img.shields.io/badge/C%2FC%2B%2B-Security%20Pipeline-2563eb?style=for-the-badge" alt="C/C++ Security"/>`{=html}
-`<img src="https://img.shields.io/badge/AI-Assisted-7c3aed?style=for-the-badge" alt="AI Assisted"/>`{=html}
-`<img src="https://img.shields.io/badge/Local--First-No%20Cloud%20Dependency-059669?style=for-the-badge" alt="Local First"/>`{=html}
-```{=html}
+  <img src="https://img.shields.io/badge/CHAKRAVYUH-v4.1-0f172a?style=for-the-badge&logo=shield&logoColor=white" alt="CHAKRAVYUH v4.1"/>
+  <img src="https://img.shields.io/badge/C%2FC%2B%2B-Security%20Pipeline-2563eb?style=for-the-badge" alt="C/C++ Security"/>
+  <img src="https://img.shields.io/badge/AI-Assisted-7c3aed?style=for-the-badge" alt="AI Assisted"/>
+  <img src="https://img.shields.io/badge/Local--First-No%20Cloud%20Dependency-059669?style=for-the-badge" alt="Local First"/>
 </p>
-```
-```{=html}
-<p align="center">
-```
-`<strong>`{=html}AI-Assisted Vulnerability Discovery,
-Proof-of-Vulnerability Verification, Historical CVE Intelligence &
-Adversarial Patch Validation for C/C++`</strong>`{=html}
-```{=html}
-</p>
-```
-```{=html}
-<p align="center">
-```
-`<em>`{=html}Discover. Prove. Correlate. Patch. Attack the Patch.
-Verify. Human Gate.`</em>`{=html}
-```{=html}
-</p>
-```
-```{=html}
-<p align="center">
-```
-`<a href="#-overview">`{=html}Overview`</a>`{=html} •
-`<a href="#-architecture">`{=html}Architecture`</a>`{=html} •
-`<a href="#-pipeline">`{=html}Pipeline`</a>`{=html} •
-`<a href="#-vulndna">`{=html}VulnDNA`</a>`{=html} •
-`<a href="#-patch-arena">`{=html}Patch Arena`</a>`{=html} •
-`<a href="#-quick-start">`{=html}Quick Start`</a>`{=html} •
-`<a href="#-api">`{=html}API`</a>`{=html} •
-`<a href="#-roadmap">`{=html}Roadmap`</a>`{=html}
-```{=html}
-</p>
-```
 
-------------------------------------------------------------------------
+<p align="center">
+  <strong>
+    AI-Assisted Vulnerability Discovery, Proof-of-Vulnerability Verification,
+    Historical CVE Intelligence & Adversarial Patch Validation for C/C++
+  </strong>
+</p>
+
+<p align="center">
+  <em>
+    Discover. Prove. Correlate. Patch. Attack the Patch. Verify. Human Gate.
+  </em>
+</p>
+
+<p align="center">
+  <a href="#-what-is-chakravyuh">Overview</a> •
+  <a href="#-architecture">Architecture</a> •
+  <a href="#-the-six-stage-security-pipeline">Pipeline</a> •
+  <a href="#-vulndna---historical-vulnerability-intelligence">VulnDNA</a> •
+  <a href="#-stage-5---patch-arena">Patch Arena</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-api">API</a> •
+  <a href="#-roadmap">Roadmap</a>
+</p>
+
+---
 
 ## ⚡ What is CHAKRAVYUH?
 
@@ -58,17 +47,17 @@ single source of truth.
 
 Instead, CHAKRAVYUH combines:
 
--   🔎 **Program reconnaissance**
--   🧠 **LLM-guided security reasoning**
--   🧩 **Static analysis**
--   🧪 **Coverage-guided fuzzing**
--   🧯 **ASan/UBSan runtime evidence**
--   🧾 **Proof-of-Vulnerability (PoV) verification**
--   🧬 **VulnDNA historical CVE precedent**
--   🛠️ **Multi-agent patch generation**
--   ⚔️ **Adversarial patch testing**
--   📊 **Deterministic patch scoring**
--   👤 **Mandatory human approval**
+- 🔎 **Program reconnaissance**
+- 🧠 **LLM-guided security reasoning**
+- 🧩 **Static analysis**
+- 🧪 **Coverage-guided fuzzing**
+- 🧯 **ASan/UBSan runtime evidence**
+- 🧾 **Proof-of-Vulnerability (PoV) verification**
+- 🧬 **VulnDNA historical CVE precedent**
+- 🛠️ **Multi-agent patch generation**
+- ⚔️ **Adversarial patch testing**
+- 📊 **Deterministic patch scoring**
+- 👤 **Mandatory human approval**
 
 The result is a complete security workflow:
 
