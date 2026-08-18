@@ -130,7 +130,7 @@ def test_verify_pov_vulnerable_server_binary(tmp_path):
     pov = verify_pov(crash_input, binary, options=PoVVerifyOptions(work_dir=str(build_dir)))
     assert pov is not None
     assert pov.cwe == "CWE-122"
-    assert pov.return_code in {134, 139, 1, 77}
+    assert pov.return_code in {134, 139, 1, 77, -6, -11}
     assert pov.confidence >= 60
 
 

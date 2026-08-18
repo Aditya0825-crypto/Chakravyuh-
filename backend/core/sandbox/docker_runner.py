@@ -10,7 +10,7 @@ from pathlib import Path
 
 from core.config import get_settings
 
-CRASH_RETURN_CODES = {1, 77, 134, 139}
+CRASH_RETURN_CODES = {1, 77, 134, 139, -6, -11, -7, -8, -4}
 
 
 @dataclass
@@ -26,7 +26,13 @@ class SandboxResult:
 
 
 def docker_available() -> bool:
-    return shutil.which("docker") is not None
+    if shutil.which("docker") is None:
+        return False
+    try:
+        res = subprocess.run(["docker", "info"], capture_output=True, timeout=2)
+        return res.returncode == 0
+    except Exception:
+        return False
 
 
 def run_in_sandbox(
@@ -65,9 +71,10 @@ def run_binary_with_input(
     """Run an ASan binary with crash input on stdin."""
     work = (work_dir or binary.parent).resolve()
     binary = binary.resolve()
-    if binary.parent != work:
+    if not binary.is_relative_to(work):
         raise ValueError(f"Binary {binary} must live inside work_dir {work} for sandbox runs")
-    cmd = [f"./{binary.name}"]
+    rel_path = binary.relative_to(work)
+    cmd = [f"./{rel_path}"]
     return run_in_sandbox(cmd, work_dir=work, stdin_data=crashing_input, timeout_sec=timeout_sec)
 
 
@@ -78,6 +85,9 @@ def _run_local(
     stdin_data: bytes | None,
     timeout_sec: int,
 ) -> SandboxResult:
+    import os
+    env = dict(os.environ)
+    env["ASAN_OPTIONS"] = "symbolize=0,abort_on_error=1"
     try:
         proc = subprocess.run(
             command,
@@ -85,6 +95,7 @@ def _run_local(
             input=stdin_data,
             capture_output=True,
             timeout=timeout_sec,
+            env=env,
         )
         return SandboxResult(
             returncode=proc.returncode,

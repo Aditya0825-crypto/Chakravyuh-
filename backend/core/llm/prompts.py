@@ -30,7 +30,7 @@ Generate up to 3 concrete input payload candidates that will trigger a crash or 
 For each candidate provide:
 - payload_name: short description (e.g., "long_overflow_512b")
 - payload_type: "text" or "hex" or "repeated"
-- payload_content: the string content, or if repeated format: "{'char': 'A', 'count': 512}"
+- payload_content: the string content, or if repeated format: "{{'char': 'A', 'count': 512}}"
 - expected_cwe: CWE ID like "CWE-122" or "CWE-121"
 - rationale: brief explanation
 

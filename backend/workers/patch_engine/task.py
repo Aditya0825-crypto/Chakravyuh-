@@ -69,6 +69,14 @@ def run_patch_engine_stage(scan_id: str, source_root: Path) -> PatchArenaResult:
                 orig_poc = crash.crash_input
             if pov:
                 target_cwe = pov.cwe or target_cwe
+        else:
+            from db.models import ReconTarget
+            rt_stmt = select(ReconTarget).where(ReconTarget.scan_id == scan_uuid).order_by(ReconTarget.rank.asc())
+            top_rt = db.scalars(rt_stmt).first()
+            if top_rt:
+                target_func = top_rt.function.replace("()", "") if top_rt.function else target_func
+                target_file = Path(top_rt.file).name if top_rt.file else target_file
+
 
         # 2. Mock or load VulnDNA matches
         vulndna_matches = [
