@@ -80,8 +80,8 @@ def scan_vulndna(
             cwe = top_pov.cwe
         if top_pov.crash_type:
             crash_type = top_pov.crash_type
-        if top_pov.asan_summary:
-            asan_summary = top_pov.asan_summary
+        if top_pov.sanitizer_report:
+            asan_summary = top_pov.sanitizer_report
         if top_pov.crash:
             if top_pov.crash.function:
                 target_func = f"{top_pov.crash.function}()"
