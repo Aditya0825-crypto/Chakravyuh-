@@ -233,6 +233,7 @@ class VerifiedPoV(Base):
     )
     confidence: Mapped[int] = mapped_column(Integer, default=0)
     cwe: Mapped[str] = mapped_column(String(32), nullable=False)
+    crash_type: Mapped[str | None] = mapped_column(String(128), nullable=True)
     sanitizer_report: Mapped[str | None] = mapped_column(Text, nullable=True)
     dedup_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     reproducible: Mapped[bool] = mapped_column(default=True)
