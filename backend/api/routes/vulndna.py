@@ -76,13 +76,15 @@ def scan_vulndna(
 
     if scan.verified_povs:
         top_pov = scan.verified_povs[0]
-        if top_pov.cwe:
+        if getattr(top_pov, "cwe", None):
             cwe = top_pov.cwe
-        if top_pov.crash_type:
-            crash_type = top_pov.crash_type
-        if top_pov.asan_summary:
-            asan_summary = top_pov.asan_summary
+        if getattr(top_pov, "sanitizer_report", None):
+            asan_summary = top_pov.sanitizer_report
         if top_pov.crash:
+            if top_pov.crash.type:
+                crash_type = top_pov.crash.type
+            if top_pov.crash.asan_summary:
+                asan_summary = top_pov.crash.asan_summary
             if top_pov.crash.function:
                 target_func = f"{top_pov.crash.function}()"
             if top_pov.crash.file:

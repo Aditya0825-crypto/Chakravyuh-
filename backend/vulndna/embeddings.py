@@ -10,10 +10,23 @@ DOCUMENT_PREFIX = "search_document: "
 QUERY_PREFIX = "search_query: "
 
 
+def _get_device() -> str:
+    try:
+        import torch
+        if torch.cuda.is_available():
+            # Verify CUDA driver is actually functional
+            torch.zeros(1, device="cuda")
+            return "cuda"
+    except Exception:
+        pass
+    return "cpu"
+
+
 @lru_cache
 def get_embed_model() -> SentenceTransformer:
     settings = get_settings()
-    return SentenceTransformer(settings.embed_model, trust_remote_code=True)
+    device = _get_device()
+    return SentenceTransformer(settings.embed_model, trust_remote_code=True, device=device)
 
 
 def embed_documents(texts: list[str]) -> list[list[float]]:
