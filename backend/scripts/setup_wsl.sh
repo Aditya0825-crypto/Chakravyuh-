@@ -8,7 +8,7 @@ sudo apt update
 sudo apt install -y \
   postgresql redis-server docker.io \
   clang llvm build-essential git patch \
-  python3.11 python3.11-venv python3-pip
+  python3 python3-venv python3-pip
 
 # PostgreSQL database + role
 sudo service postgresql start
@@ -27,7 +27,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BACKEND="$REPO_ROOT/backend"
 
 cd "$BACKEND"
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt

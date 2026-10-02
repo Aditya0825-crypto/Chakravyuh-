@@ -105,12 +105,13 @@ def run_patch_engine_stage(scan_id: str, source_root: Path) -> PatchArenaResult:
             vulndna_matches=vulndna_matches,
         )
 
-        # 4. Sandbox verification & multi-metric scoring
-        _log(db, scan, "Compiling candidate patches and verifying against 9 attack variants...")
+        # 4. Sandbox verification & multi-metric scoring (CWE-specific adversarial suite)
+        _log(db, scan, f"Compiling candidate patches and running CWE-specific adversarial test suite ({target_cwe})...")
         scored_candidates, winner = evaluate_and_select_winner(
             candidates=raw_candidates,
             source_root=source_root,
             original_poc_str=orig_poc,
+            cwe_id=target_cwe,
         )
 
         # 5. Persist PatchCandidate records

@@ -57,35 +57,74 @@ def get_scan_findings(scan_id: str, db: Session = Depends(get_db)):
         seeds=fuzz_run.seeds_count if fuzz_run else 0,
     )
 
-    # 3. Crashes
+    # 3. Findings (Replaces Crash)
+    from db.models import PatchCandidate, VerifiedPoV
+    from core.finding import VulnerabilityFinding, EvidenceItem, PatchRef
+
     crash_stmt = select(Crash).where(Crash.scan_id == scan_uuid).order_by(Crash.confidence.desc())
     crash_records = list(db.scalars(crash_stmt).all())
-    crash_items = [
-        CrashItemSchema(
-            id=f"crash-{str(c.id)[:8]}",
-            status=c.status,
-            type=c.type,
-            cwe=c.cwe,
-            file=c.file,
-            line=c.line,
-            function=c.function,
-            severity=c.severity,
-            signal=c.signal,
-            returnCode=c.return_code,
-            confidence=c.confidence,
-            asanSummary=c.asan_summary or "",
-            stackTrace=c.stack_trace or [],
-            reproduced=c.reproduced,
-            deduplicated=c.deduplicated,
-            crashInput=c.crash_input or "",
-            discoveryMethod=c.discovery_method,
-        )
-        for c in crash_records
-    ]
+
+    # Get patches
+    patch_stmt = select(PatchCandidate).where(PatchCandidate.scan_id == scan_uuid)
+    all_patches = list(db.scalars(patch_stmt).all())
+
+    # Get PoVs
+    pov_stmt = select(VerifiedPoV).where(VerifiedPoV.scan_id == scan_uuid)
+    all_povs = {pov.crash_id: pov for pov in db.scalars(pov_stmt).all()}
+
+    finding_items = []
+    for c in crash_records:
+        f = VulnerabilityFinding.from_crash_record(c, scan_id)
+        
+        # Hydrate verification status
+        if c.status == "verified":
+            f.verification_status = "VERIFIED"
+            f.confidence = c.confidence
+            pov = all_povs.get(c.id)
+            if pov and pov.sanitizer_report:
+                f.add_evidence(EvidenceItem(
+                    evidence_type="verification_report",
+                    description="Evidence from verification stage",
+                    raw_data=pov.sanitizer_report,
+                    verified=True
+                ))
+        elif c.status == "partial":
+            f.verification_status = "PARTIAL"
+        elif c.status == "rejected":
+            f.verification_status = "REJECTED"
+            
+        # Hydrate patch candidates
+        # Currently patches are just linked to scan_id in the DB. In a real system, they'd link to the specific finding.
+        # We will attach all patches for this CWE.
+        cwe_patches = [p for p in all_patches if (hasattr(p, 'cwe_id') and getattr(p, 'cwe_id') == c.cwe) or p.status == 'SELECTED']
+        if not cwe_patches and all_patches:
+             # Fallback if no specific CWE mapping
+             cwe_patches = all_patches
+             
+        for p in cwe_patches[:3]:  # Cap at 3 for UI
+             f.patch_candidates.append(PatchRef(
+                 agent=p.agent,
+                 name=p.name,
+                 strategy=p.strategy,
+                 diff=p.diff,
+                 score_total=p.score_total,
+                 status=p.status,
+                 attacks_blocked=p.attacks_blocked,
+                 attacks_total=p.attacks_total
+             ))
+             if p.status == "SELECTED":
+                 f.score_total = p.score_total
+                 f.score_security = p.score_security
+                 f.score_regression = p.score_regression
+                 f.score_performance = p.score_performance
+                 f.score_rediscovery = p.score_rediscovery
+
+        f.set_gate_status()
+        finding_items.append(f.to_api_dict())
 
     return FindingsResponse(
         scan_id=scan_id,
         fuzzing_results=fuzz_schema,
         static_findings=static_items,
-        crashes=crash_items,
+        findings=finding_items,
     )

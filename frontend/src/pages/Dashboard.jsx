@@ -34,7 +34,7 @@ export default function Dashboard() {
   const nav = useNavigate();
   const { scanId, scan, stageStatus, setScanId } = useScan();
 
-  const [topCrash, setTopCrash] = useState(null);
+  const [topFinding, setTopFinding] = useState(null);
   const [topVulnDNA, setTopVulnDNA] = useState(null);
   const [winningPatch, setWinningPatch] = useState(null);
   const [recentScans, setRecentScans] = useState([]);
@@ -55,8 +55,8 @@ export default function Dashboard() {
 
     getFindings(scanId)
       .then((data) => {
-        if (data?.crashes?.length > 0) {
-          setTopCrash(data.crashes[0]);
+        if (data?.findings?.length > 0) {
+          setTopFinding(data.findings[0]);
         }
       })
       .catch(() => {});
@@ -158,24 +158,24 @@ export default function Dashboard() {
         <div className="grid-3-2">
           {/* Finding Hero */}
           <div className="card accent-left-red dash__finding-hero">
-            {topCrash ? (
+            {topFinding ? (
               <>
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <span className="badge badge--critical">CRITICAL FINDING</span>
-                    <span className="mono text-xs text-muted">{topCrash.cwe || 'CWE-122'}</span>
+                    <span className="mono text-xs text-muted">{topFinding.cwe_id || 'CWE-122'}</span>
                   </div>
-                  <span className="mono text-xs text-amber font-bold">{topCrash.id}</span>
+                  <span className="mono text-xs text-amber font-bold">{topFinding.finding_id?.substring(0,8)}</span>
                 </div>
 
-                <h2 className="dash__finding-title">{topCrash.type || 'Vulnerability'} in {topCrash.function || 'target'}()</h2>
+                <h2 className="dash__finding-title">{topFinding.root_cause || 'Vulnerability'} in {topFinding.function || 'target'}()</h2>
 
                 <div className="dash__taint-box mt-4">
                   <div className="text-xs text-muted mono font-bold uppercase mb-2">TAINT FLOW:</div>
                   <div className="dash__taint-chain">
                     <span className="dash__taint-chip">Input Source</span>
                     <ChevronRight size={14} className="dash__taint-arrow" />
-                    <span className="dash__taint-chip">{topCrash.function || 'target'}()</span>
+                    <span className="dash__taint-chip">{topFinding.function || 'target'}()</span>
                     <ChevronRight size={14} className="dash__taint-arrow" />
                     <span className="dash__taint-chip dash__taint-chip--sink">Unbounded SINK ⚠</span>
                   </div>
@@ -184,11 +184,11 @@ export default function Dashboard() {
                 <div className="dash__finding-grid mt-4">
                   <div className="dash__finding-cell">
                     <span className="dash__cell-label">Location</span>
-                    <span className="mono text-xs font-semibold">{topCrash.file || 'source'}:{topCrash.line || 0}</span>
+                    <span className="mono text-xs font-semibold">{topFinding.file || 'source'}:{topFinding.line || 0}</span>
                   </div>
                   <div className="dash__finding-cell">
-                    <span className="dash__cell-label">Sanitizer Output</span>
-                    <span className="mono text-xs text-red font-semibold">{topCrash.asanSummary || 'ASan Trapped'}</span>
+                    <span className="dash__cell-label">Verification Log</span>
+                    <span className="mono text-xs text-red font-semibold">{topFinding.asan_summary || 'Evidence Trapped'}</span>
                   </div>
                   <div className="dash__finding-cell">
                     <span className="dash__cell-label">Replay Rate</span>
@@ -233,11 +233,11 @@ export default function Dashboard() {
             <div className="card">
               <div className="stat-row" style={{ padding: '8px 0' }}>
                 <span className="stat-row__label">Confidence Score</span>
-                <span className="mono font-bold text-amber" style={{ fontSize: 16 }}>{topCrash?.confidence || 0}%</span>
+                <span className="mono font-bold text-amber" style={{ fontSize: 16 }}>{topFinding?.confidence || 0}%</span>
               </div>
               <div className="stat-row" style={{ padding: '8px 0' }}>
                 <span className="stat-row__label">Discovery Method</span>
-                <span className="mono text-xs font-semibold text-primary">{topCrash?.discoveryMethod || 'Real-time Pipeline'}</span>
+                <span className="mono text-xs font-semibold text-primary">{topFinding?.source || 'Real-time Pipeline'}</span>
               </div>
             </div>
           </div>

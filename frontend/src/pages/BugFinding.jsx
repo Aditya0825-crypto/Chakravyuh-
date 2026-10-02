@@ -22,14 +22,11 @@ export default function BugFinding() {
     if (!scanId) return;
     getFindings(scanId)
       .then((data) => {
-        if (data?.crashes) {
-          setCrashes(data.crashes);
-          if (data.crashes.length > 0) {
-            setExpandedCrash(data.crashes[0].id);
-          }
-        }
         if (data?.findings) {
           setFindings(data.findings);
+          if (data.findings.length > 0) {
+            setExpandedCrash(data.findings[0].finding_id);
+          }
         }
       })
       .catch(() => {});
@@ -51,11 +48,11 @@ export default function BugFinding() {
         {[
           {
             icon: Code2, label: 'Static Analysis', engine: 'Semgrep + AST Parser', color: 'blue',
-            badge: 'COMPLETE', stats: [`${findings.length} Security Sinks`, 'Call Graph Taint Path', 'Inter-procedural Flow'],
+            badge: 'COMPLETE', stats: [`Security Sinks`, 'Call Graph Taint Path', 'Inter-procedural Flow'],
           },
           {
             icon: Zap, label: 'Directed Fuzzing', engine: 'AFL++ / Mutation Runner', color: 'amber',
-            badge: 'COMPLETE', stats: [`${crashes.length} Crash Candidates`, 'Bounded Mutation Seeds', 'Memory Sanitizer Traps'],
+            badge: 'COMPLETE', stats: [`${findings.length} Vulnerability Candidates`, 'Bounded Mutation Seeds', 'Behavioral Monitors'],
           },
           {
             icon: Brain, label: 'LLM Reasoning', engine: 'DeepSeek-Coder / Ollama', color: 'purple',
@@ -127,33 +124,33 @@ export default function BugFinding() {
         )}
       </motion.div>
 
-      {/* Confirmed Crashes Section */}
+      {/* Confirmed Findings Section */}
       <motion.div className="section-gap--sm" {...anim(0.1)}>
         <div className="flex items-center justify-between mb-3">
           <span className="mono text-xs font-bold text-muted uppercase tracking-wider">
-            Discovered Crash Candidates ({crashes.length})
+            Discovered Vulnerability Candidates ({findings.length})
           </span>
-          <span className="text-xs text-muted">Click to inspect payload & ASan stderr</span>
+          <span className="text-xs text-muted">Click to inspect payload & evidence</span>
         </div>
 
         <div className="stack--sm">
-          {crashes.length > 0 ? (
-            crashes.map(c => {
-              const isExp = expandedCrash === c.id;
+          {findings.length > 0 ? (
+            findings.map(c => {
+              const isExp = expandedCrash === c.finding_id;
               return (
-                <div key={c.id} className={`card bf__crash-card ${isExp ? 'bf__crash-card--expanded' : ''}`}>
+                <div key={c.finding_id} className={`card bf__crash-card ${isExp ? 'bf__crash-card--expanded' : ''}`}>
                   <div
                     className="flex items-center justify-between cursor-pointer flex-wrap gap-2"
-                    onClick={() => setExpandedCrash(isExp ? null : c.id)}
+                    onClick={() => setExpandedCrash(isExp ? null : c.finding_id)}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="mono text-xs text-muted">{c.id}</span>
-                      <span className="badge badge--critical">{c.type || 'Heap Buffer Overflow'}</span>
+                      <span className="mono text-xs text-muted">{c.finding_id.substring(0,8)}</span>
+                      <span className="badge badge--critical">{c.root_cause || c.cwe_id}</span>
                       <span className="mono text-sm font-bold">{c.function}()</span>
                       <span className="mono text-xs text-muted">{c.file}:{c.line}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="badge badge--neutral mono text-xs">{c.discoveryMethod || 'Directed PoC'}</span>
+                      <span className="badge badge--neutral mono text-xs">{c.source || 'fuzzing'}</span>
                       <span className="mono text-xs font-bold text-amber">{c.confidence || 96}% Conf.</span>
                       {isExp ? <ChevronUp size={15} /> : <ChevronDown size={15} style={{ color: 'var(--t4)' }} />}
                     </div>
@@ -168,20 +165,20 @@ export default function BugFinding() {
                     >
                       <div className="grid-2 mb-3">
                         <div>
-                          <span className="text-xs text-muted mono">CRASH PAYLOAD (HEX / ASCII):</span>
+                          <span className="text-xs text-muted mono">TRIGGER PAYLOAD:</span>
                           <div className="terminal mt-1" style={{ fontSize: 11 }}>
                             <div className="terminal__body" style={{ padding: '8px 12px', maxHeight: 80, overflowY: 'auto' }}>
-                              <span className="t-amber mono break-all">{c.crashInput || 'N/A'}</span>
+                              <span className="t-amber mono break-all">{c.trigger || 'N/A'}</span>
                             </div>
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-xs text-muted mono">SANITIZER LOG (STDERR):</span>
+                          <span className="text-xs text-muted mono">STATIC / TRACE EVIDENCE:</span>
                           <div className="terminal mt-1" style={{ fontSize: 11 }}>
                             <div className="terminal__body" style={{ padding: '8px 12px', maxHeight: 80, overflowY: 'auto' }}>
                               <span className="t-error mono">
-                                {c.asanStderr || `AddressSanitizer: ${c.type || 'crash'} at ${c.file}:${c.line}`}
+                                {c.asan_summary || `Static trace to ${c.file}:${c.line}`}
                               </span>
                             </div>
                           </div>
@@ -189,7 +186,7 @@ export default function BugFinding() {
                       </div>
 
                       <div className="flex items-center justify-between text-xs text-muted mono pt-2" style={{ borderTop: '1px solid var(--border-1)' }}>
-                        <span>REPLAY STABILITY: <strong className="text-green">Verified</strong></span>
+                        <span>VERIFICATION METHOD: <strong className="text-green">{c.verification_method || 'Sandbox Replay'}</strong></span>
                         <span>STATUS: <strong className="text-cyan">Dispatched to PoV Verifier →</strong></span>
                       </div>
                     </motion.div>
@@ -199,8 +196,8 @@ export default function BugFinding() {
             })
           ) : (
             <div className="card p-6 text-center text-muted">
-              <p className="text-sm font-semibold mb-1">No Crash Candidates Discovered Yet</p>
-              <p className="text-xs">Fuzzing & LLM seed synthesis will populate crash targets here when triggered during an active scan.</p>
+              <p className="text-sm font-semibold mb-1">No Vulnerability Candidates Discovered Yet</p>
+              <p className="text-xs">Fuzzing & LLM seed synthesis will populate vulnerable targets here when triggered during an active scan.</p>
             </div>
           )}
         </div>

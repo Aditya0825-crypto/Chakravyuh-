@@ -59,13 +59,21 @@ def run_vulndna_stage(scan_id: str) -> VulnDNAResult:
 
         if pov_records:
             for pov, crash in pov_records:
+                # Build CWE-appropriate query
+                from core.cwe_registry import get_cwe
+                desc = get_cwe(pov.cwe)
+                crash_type_label = crash.type if crash else (desc.name if desc else "Unknown")
                 q = VulnDNAQuery(
-                    crash_type=crash.type if crash else "Heap Buffer Overflow",
+                    crash_type=crash_type_label,
                     cwe=pov.cwe,
                     function=crash.function if crash else "handle_request",
-                    file=crash.file if crash else "server.c",
+                    file=crash.file if crash else "",
                     asan_summary=crash.asan_summary if crash else (pov.sanitizer_report or ""),
                     stack_trace=crash.stack_trace if crash else [],
+                    # Extended fields for non-ASan CWEs
+                    root_cause=crash.type if crash else "",
+                    code_pattern=desc.adversarial_strategy[:100] if desc else "",
+                    verification_method=desc.verification_method if desc else "asan_runtime",
                 )
                 matches, meta = search_vulndna(q, n_results=5)
                 corpus_sz = max(corpus_sz, meta.get("corpus_size", 0))

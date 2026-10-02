@@ -44,6 +44,11 @@ class VulnDNAQuery:
     file: str | None = None
     asan_summary: str | None = None
     stack_trace: list[str] = field(default_factory=list)
+    # Extended fields for non-crash CWEs
+    code_pattern: str | None = None      # e.g. "MD5", "strcpy", "system("
+    root_cause: str | None = None
+    trigger: str | None = None           # input/condition that triggers the vuln
+    verification_method: str | None = None  # e.g. "static_ast", "asan_runtime"
 
     def query_text(self) -> str:
         lines = [
@@ -54,10 +59,16 @@ class VulnDNAQuery:
             lines.append(f"Function: {self.function}")
         if self.file:
             lines.append(f"File: {self.file}")
+        if self.code_pattern:
+            lines.append(f"Code pattern: {self.code_pattern}")
+        if self.root_cause:
+            lines.append(f"Root cause: {self.root_cause[:200]}")
         if self.asan_summary:
             lines.append(f"Sanitizer: {self.asan_summary[:800]}")
         if self.stack_trace:
             lines.append("Stack trace: " + " | ".join(self.stack_trace[:8]))
+        if self.verification_method:
+            lines.append(f"Verification method: {self.verification_method}")
         return "\n".join(lines)
 
 
